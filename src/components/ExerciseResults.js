@@ -10,7 +10,8 @@ import {
   } from '@aws-amplify/ui-react';
 
 const ExerciseResults = () =>  {
-    const endpoint = 'http://localhost:8080';
+    //const endpoint = 'http://localhost:8080';
+    const endpoint = 'http://Testapp-env.eba-tqifczt7.us-west-2.elasticbeanstalk.com';
     const { state } = useLocation();
     //const { grade } = state;
     const [exerciseResults, setExerciseResults] = useState([]);

@@ -43,8 +43,8 @@
   #do-exercise-container {
     background-color: gainsboro;
     border: 0;
-    width: 100%;
-    height: 550px;
+    width: 850px;
+    height: 650px;
     overflow:hidden;
     overflow-y:hidden;
 }

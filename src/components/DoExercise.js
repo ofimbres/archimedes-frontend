@@ -40,7 +40,8 @@ const DoExercise = () => {
             headers: headers
         };
 
-        let endpoint = 'http://localhost:8080';
+        //const endpoint = 'http://localhost:8080';
+        const endpoint = 'http://Testapp-env.eba-tqifczt7.us-west-2.elasticbeanstalk.com';
 
         fetch(endpoint + '/exerciseresult/', requestOptions)
             .then(response => response.text())
