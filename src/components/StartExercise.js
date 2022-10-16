@@ -1,11 +1,13 @@
-import React, {  useCallback, useEffect, useState } from 'react';
-import {  Navigate} from "react-router-dom";
+import React, {  startTransition, useCallback, useEffect, useState } from 'react';
+import {  Navigate, useLocation } from "react-router-dom";
 import { Amplify, Auth } from 'aws-amplify';
 import { useAuthenticator } from '@aws-amplify/ui-react';
 
-const DoExercise = () => {
+const StartExercise = () => {
 
-    const [accessToken, setAccessToken] = useState({});
+    const { state } = useLocation();
+    const exerciseId = state; // WN16
+
     const [isCompleted, setCompleted] = useState(false);
 
     const { user, signOut, authStatus } = useAuthenticator((context) => [context.user]);
@@ -16,22 +18,21 @@ const DoExercise = () => {
 
         const data = {
             worksheetContentCopy: '<!DOCTYPE html>' + event.data.worksheetCopy,
-            exerciseId: 'WN16',
+            exerciseId: exerciseId,
             classroomId: 'e46e7191-e31d-434a-aba3-b9a9c187a632',
             studentId: user.username,
             score: event.data.grade
         }
-        // '3c44e80d-d9ac-4c1c-a3fa-e38317f50011',
 
         let headers = new Headers();
 
         headers.append('Content-Type', 'application/json');
         //headers.append('Accept', 'application/json');
-        headers.append('Access-Control-Allow-Origin', 'http://localhost:3001');
+        headers.append('Access-Control-Allow-Origin', '*');
         headers.append('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, PUT, OPTIONS');
         headers.append('Access-Control-Allow-Headers', 'Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With');
         headers.append('Access-Control-Allow-Credentials', 'true');
-        headers.append('Authorization', 'Bearer ' + accessToken);
+        headers.append('Authorization', 'Bearer ' + user.signInUserSession.accessToken.jwtToken);
 
         // Simple POST request with a JSON body using fetch
         const requestOptions = {
@@ -40,10 +41,8 @@ const DoExercise = () => {
             headers: headers
         };
 
-        //const endpoint = 'http://localhost:8080';
-        const endpoint = 'http://Testapp-env.eba-tqifczt7.us-west-2.elasticbeanstalk.com';
-
-        fetch(endpoint + '/exerciseresult/', requestOptions)
+        const endpoint = process.env.REACT_APP_BACKEND_API_ENDPOINT;
+        fetch(`${endpoint}/exerciseresult/`, requestOptions)
             .then(response => response.text())
             .then(data => {
                 setCompleted(true);
@@ -51,19 +50,13 @@ const DoExercise = () => {
     });
 
     const handleOnLoad = useCallback(event => {
-        //event.target.style.height = event.target.contentWindow.documentElement.scrollHeight + 'px';
-
         const message = { studentId: user.username, studentName: user.attributes.given_name + ' ' + user.attributes.family_name }; 
         event.target.contentWindow.postMessage(message, '*');
     });
 
     useEffect(() => {
-
-        Auth.currentSession().then(data => setAccessToken(data.accessToken.jwtToken));
-        Auth.currentUserInfo().then(data => console.log(data))
-
         window.addEventListener("message", handleOnMessage);
-        const frameEl = document.getElementById('do-exercise-container');
+        const frameEl = document.getElementById('webworksheet-box');
 
         if (!isCompleted) {
             frameEl.addEventListener('load', handleOnLoad);
@@ -79,16 +72,15 @@ const DoExercise = () => {
     }, [handleOnMessage, handleOnLoad]);
 
     if (isCompleted) {
-        let state = { studentId: user.username, classroomId: 'e46e7191-e31d-434a-aba3-b9a9c187a632', exerciseId :'WN16' };
+        let state = { studentId: user.username, classroomId: 'e46e7191-e31d-434a-aba3-b9a9c187a632', exerciseId : exerciseId };
         return <Navigate to="/exercise/completed" state={ state } />
     }
 
     return (
-        <div className="DoExercise">
-            <h1>Do Exercise</h1>
-            <iframe id="do-exercise-container" scrolling="no" src="http://archimedes-mini-quizzes.s3-website-us-west-2.amazonaws.com/WN16.htm" />
+        <div className="do-exercise-page">
+            <iframe id="webworksheet-box"  src="http://archimedes-mini-quizzes.s3-website-us-west-2.amazonaws.com/WN16.htm" />
         </div>
     );
 }
 
-export default DoExercise;
+export default StartExercise;

@@ -1,25 +1,18 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useLocation } from "react-router-dom";
+import { useAuthenticator } from '@aws-amplify/ui-react';
 
-import {
-    Table,
-    TableCell,
-    TableBody,
-    TableHead,
-    TableRow,
-  } from '@aws-amplify/ui-react';
-
-const ExerciseResults = () =>  {
-    //const endpoint = 'http://localhost:8080';
-    const endpoint = 'http://Testapp-env.eba-tqifczt7.us-west-2.elasticbeanstalk.com';
+const ViewExerciseResults = () =>  {
+    const endpoint = process.env.REACT_APP_BACKEND_API_ENDPOINT;
     const { state } = useLocation();
-    //const { grade } = state;
+
+    const { user } = useAuthenticator((context) => [context.user]);
+
     const [exerciseResults, setExerciseResults] = useState([]);
     const [exerciseResult, setExerciseResult] = useState({});
     const hasFetchedData = useRef(false);
 
     useEffect(() => {
-        const token = localStorage.getItem('CognitoIdentityServiceProvider.2ba4j54rtfsvpgtq7rfr2a3a0m.ofimbres.accessToken');
         let headers = new Headers();
 
         headers.append('Content-Type', 'application/json');
@@ -28,7 +21,7 @@ const ExerciseResults = () =>  {
         headers.append('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, PUT, OPTIONS');
         headers.append('Access-Control-Allow-Headers', 'Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With');
         headers.append('Access-Control-Allow-Credentials', 'true');
-        headers.append('Authorization', 'Bearer ' + token);
+        headers.append('Authorization', 'Bearer ' + user.signInUserSession.accessToken.jwtToken);
 
         // Simple POST request with a JSON body using fetch
         const requestOptions = {
@@ -56,27 +49,35 @@ const ExerciseResults = () =>  {
             hasFetchedData.current = true;
         }
     }, []);
-
-    const heading = ['Student', 'Score'];
     
     return (
         <div className="ExerciseResults">
             <h1>Exercise Results</h1>
-            <p>Score: <span id="grade">{exerciseResult.score}</span></p>
+            <p>My score: <span id="grade">{exerciseResult.score}</span></p>
             <p>View my latest <a href={`http://archimedes-exercise-results.s3-website-us-west-2.amazonaws.com/${exerciseResult.s3Key}`} target="_blank">worksheet results</a></p>
 
-            <Table className='center' style={{ width: 500 }} highlightOnHover={true} >
-                <TableHead>
-                    <TableRow>
-                        { heading.map(head =>  <TableCell as="th">{head}</TableCell>) }
-                    </TableRow>
-                </TableHead>
-                <TableBody>
-                    {exerciseResults.map(row => <TableRow><TableCell>{row.student.firstName}</TableCell><TableCell>{row.score}</TableCell></TableRow>) }
-                </TableBody>
-            </Table>
+            <table className="table w-50 mx-auto">
+              <thead>
+                <tr>
+                  <th scope="col">#</th>
+                  <th scope="col">First name</th>
+                  <th scope="col">Last name</th>
+                  <th scope="col">Score</th>
+                </tr>
+              </thead>
+              <tbody>
+                {exerciseResults.map((row, i) => 
+                <tr key={i}>
+                  <th scope="row">{i+1}</th>
+                  <td>{row.student.firstName}</td>
+                  <td>{row.student.lastName}</td>
+                  <td>{row.score}</td>
+                </tr>
+                )}
+              </tbody>
+            </table>
         </div>
     );
 }
 
-export default ExerciseResults;
+export default ViewExerciseResults;
