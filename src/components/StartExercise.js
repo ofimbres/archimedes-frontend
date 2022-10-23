@@ -1,10 +1,10 @@
-import React, {  startTransition, useCallback, useEffect, useState } from 'react';
+import React, {  useCallback, useEffect, useState } from 'react';
 import {  Navigate, useLocation } from "react-router-dom";
-import { Amplify, Auth } from 'aws-amplify';
 import { useAuthenticator } from '@aws-amplify/ui-react';
 
 const StartExercise = () => {
 
+    const miniquizEndpoint = process.env.REACT_APP_MINIQUIZ_ENDPOINT;
     const { state } = useLocation();
     const exerciseId = state; // WN16
 
@@ -13,9 +13,9 @@ const StartExercise = () => {
     const { user, signOut, authStatus } = useAuthenticator((context) => [context.user]);
 
     const handleOnMessage = useCallback((event) => {
-        if (event.origin !== "http://archimedes-mini-quizzes.s3-website-us-west-2.amazonaws.com")
-            return;
-
+        //if (event.origin !== miniquizEndpoint)
+        //    return;
+        
         const data = {
             worksheetContentCopy: '<!DOCTYPE html>' + event.data.worksheetCopy,
             exerciseId: exerciseId,
@@ -78,7 +78,7 @@ const StartExercise = () => {
 
     return (
         <div className="do-exercise-page">
-            <iframe id="webworksheet-box"  src="http://archimedes-mini-quizzes.s3-website-us-west-2.amazonaws.com/WN16.htm" />
+            <iframe id="webworksheet-box"  src={`${miniquizEndpoint}/${exerciseId}.html`} />
         </div>
     );
 }

@@ -71,3 +71,24 @@ This section has moved here: [https://facebook.github.io/create-react-app/docs/t
 
 1. npm install env-cmd
 https://www.opcito.com/blogs/managing-multiple-environment-configurations-in-react-app
+
+# Notes
+.env.development and .env.production holds environment variables
+
+Use Profile to configure desire package.json script to run on elastic beanstalk
+https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/nodejs-configuration-procfile.html
+https://stackoverflow.com/questions/61782952/unknown-or-duplicate-parameter-nodecommand
+
+Make iframe 100%
+https://stackoverflow.com/questions/325273/make-iframe-to-fit-100-of-containers-remaining-height
+
+How to Control Body Styles in React Applications
+https://medium.com/@gatilin222/controlling-body-styles-in-react-applications-ddfa4ac65d81
+https://thewebdev.info/2021/09/25/how-to-set-html-body-element-styles-from-within-a-react-component/
+https://stackoverflow.com/questions/25474803/trying-to-use-react-dom-to-set-body-styles
+
+Environment variables from Amplify Authentication
+https://docs.amplify.aws/cli/auth/import/#unlink-an-existing-cognito-user-pool-or-identity-pool
+
+Amplify retrieve user authentication
+https://medium.com/@dantasfiles/three-methods-to-get-user-information-in-aws-amplify-authentication-e4e39e658c33

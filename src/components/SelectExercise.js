@@ -45,7 +45,7 @@ const SelectExercise = () => {
             <h1>Select exercise</h1>
             <div>
                 {exerciseList.map(e => 
-                <Link key={e.id} to="/exercise/start" state={ e.id }>{e.classification} - [{e.id}] {e.name}</Link>
+                <p key={e.id}><Link to="/exercise/start" state={ e.id }>{e.classification} - [{e.id}] {e.name}</Link></p>
                 )}
             </div>
         </div>
