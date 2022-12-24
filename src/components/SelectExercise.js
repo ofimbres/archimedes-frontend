@@ -17,21 +17,24 @@ const SelectExercise = () => {
         let headers = new Headers();
         headers.append('Content-Type', 'application/json');
         headers.append('Accept', 'application/json');
-        headers.append('Access-Control-Allow-Origin', '*');
+        headers.append('Access-Control-Allow-Origin', 'http://localhost:3000');
         headers.append('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, PUT, OPTIONS');
-        headers.append('Access-Control-Allow-Headers', 'Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With');
+        headers.append('Access-Control-Allow-Headers', 'Content-Type, Access-Control-Allow-Headers, Access-Control-Allow-Origin, Authorization, X-Requested-With');
         headers.append('Access-Control-Allow-Credentials', 'true');
         headers.append('Authorization', 'Bearer ' + user.signInUserSession.accessToken.jwtToken);
 
         const requestOptions = {
             headers: headers
         };
-
+        
+        var topic = 'ALGEBRAIC_EXPRESSIONS';
+        var subtopic = 'AX';
         const endpoint = process.env.REACT_APP_BACKEND_API_ENDPOINT;
-        fetch(`${endpoint}/exercise/`, requestOptions)
+        fetch(`${endpoint}/api/v1/topic/${topic}/subtopic/${subtopic}/exercises/`, requestOptions)
             .then(response => response.json())
             .then(data => {
                 setExerciseList(data);
+                console.log(data[0].id);
             });
 
         hasFetchedData.current = true;

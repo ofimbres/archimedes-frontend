@@ -28,7 +28,7 @@ const StartExercise = () => {
 
         headers.append('Content-Type', 'application/json');
         //headers.append('Accept', 'application/json');
-        headers.append('Access-Control-Allow-Origin', '*');
+        headers.append('Access-Control-Allow-Origin', 'http://localhost:3000');
         headers.append('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, PUT, OPTIONS');
         headers.append('Access-Control-Allow-Headers', 'Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With');
         headers.append('Access-Control-Allow-Credentials', 'true');
@@ -42,7 +42,7 @@ const StartExercise = () => {
         };
 
         const endpoint = process.env.REACT_APP_BACKEND_API_ENDPOINT;
-        fetch(`${endpoint}/exerciseresult/`, requestOptions)
+        fetch(`${endpoint}/api/v1/exerciseresult/`, requestOptions)
             .then(response => response.text())
             .then(data => {
                 setCompleted(true);

@@ -17,7 +17,7 @@ const ViewExerciseResults = () =>  {
 
         headers.append('Content-Type', 'application/json');
         //headers.append('Accept', 'application/json');
-        headers.append('Access-Control-Allow-Origin', 'http://localhost:3001');
+        headers.append('Access-Control-Allow-Origin', 'http://localhost:3000');
         headers.append('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, PUT, OPTIONS');
         headers.append('Access-Control-Allow-Headers', 'Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With');
         headers.append('Access-Control-Allow-Credentials', 'true');
@@ -34,13 +34,13 @@ const ViewExerciseResults = () =>  {
             const studentId = state.studentId;
             const exerciseId = state.exerciseId;
 
-            fetch(`${endpoint}/exerciseresult/class/${classroomId}/student/${studentId}/exercise/${exerciseId}`, requestOptions)
+            fetch(`${endpoint}/api/v1/exerciseresult/class/${classroomId}/student/${studentId}/exercise/${exerciseId}`, requestOptions)
             .then(response => response.json())
             .then(data => {
                 setExerciseResult(data)
             });
 
-            fetch(`${endpoint}/exerciseresult/class/${classroomId}/exercise/${exerciseId}`, requestOptions)
+            fetch(`${endpoint}/api/v1/exerciseresult/class/${classroomId}/exercise/${exerciseId}`, requestOptions)
             .then(response => response.json())
             .then(data => {
                 setExerciseResults(data)
