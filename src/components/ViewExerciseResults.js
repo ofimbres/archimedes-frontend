@@ -54,7 +54,7 @@ const ViewExerciseResults = () =>  {
         <div className="ExerciseResults">
             <h1>Exercise Results</h1>
             <p>My score: <span id="grade">{exerciseResult.score}</span></p>
-            <p>View my latest <a href={`http://archimedes-exercise-results.s3-website-us-west-2.amazonaws.com/${exerciseResult.s3Key}`} target="_blank">worksheet results</a></p>
+            <p>View my latest <a href={`http://archimedes-exercise-results.s3-website-us-west-2.amazonaws.com/${exerciseResult.s3Key}`} target="_blank" rel="noreferrer">worksheet results</a></p>
 
             <table className="table w-50 mx-auto">
               <thead>

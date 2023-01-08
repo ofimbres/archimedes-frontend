@@ -10,7 +10,7 @@ const StartExercise = () => {
 
     const [isCompleted, setCompleted] = useState(false);
 
-    const { user, signOut, authStatus } = useAuthenticator((context) => [context.user]);
+    const { user } = useAuthenticator((context) => [context.user]);
 
     const handleOnMessage = useCallback((event) => {
         //if (event.origin !== miniquizEndpoint)

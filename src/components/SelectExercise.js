@@ -1,13 +1,10 @@
-import React, {  useCallback, useEffect, useState, useRef } from 'react';
-import {  Navigate, Link } from "react-router-dom";
-import { Amplify, Auth } from 'aws-amplify';
+import React, { useEffect, useState, useRef } from 'react';
+import {  Link } from "react-router-dom";
 import { useAuthenticator } from '@aws-amplify/ui-react';
 
 const SelectExercise = () => {
 
-    const [isCompleted, setCompleted] = useState(false);
-
-    const { user, signOut, authStatus } = useAuthenticator((context) => [context.user]);
+    const { user } = useAuthenticator((context) => [context.user]);
 
     const [exerciseList, setExerciseList] = useState([]);
     const hasFetchedData = useRef(false);
@@ -34,7 +31,6 @@ const SelectExercise = () => {
             .then(response => response.json())
             .then(data => {
                 setExerciseList(data);
-                console.log(data[0].id);
             });
 
         hasFetchedData.current = true;
