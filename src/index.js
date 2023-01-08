@@ -5,6 +5,7 @@ import App from './App';
 import { Authenticator } from '@aws-amplify/ui-react';
 import reportWebVitals from './reportWebVitals';
 import  { Routes, BrowserRouter } from "react-router-dom";
+import 'bootstrap/dist/css/bootstrap.css';
 
 const root = ReactDOM.createRoot(document.getElementById('root'));
 root.render(

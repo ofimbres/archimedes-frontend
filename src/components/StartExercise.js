@@ -3,6 +3,7 @@ import {  Navigate, useLocation } from "react-router-dom";
 import { useAuthenticator } from '@aws-amplify/ui-react';
 
 const StartExercise = () => {
+    
 
     const miniquizEndpoint = process.env.REACT_APP_MINIQUIZ_ENDPOINT;
     const { state } = useLocation();
