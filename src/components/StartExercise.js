@@ -78,7 +78,7 @@ const StartExercise = () => {
 
     return (
         <div className="do-exercise-page">
-            <iframe id="webworksheet-box"  src={`${miniquizEndpoint}/${exerciseId}.html`} />
+            <iframe title="Start exercise" id="webworksheet-box"  src={`${miniquizEndpoint}/${exerciseId}.html`} />
         </div>
     );
 }
