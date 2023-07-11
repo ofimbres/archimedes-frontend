@@ -1,6 +1,23 @@
 {
+    "name": "Javascript Node",
     "build": {
+        "context": ".",
         "dockerfile": "Dockerfile"
     },
-    "remoteUser": "node"
+    "remoteUser": "node",
+    "postCreateCommand": "npm install",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "ms-azuretools.vscode-docker"
+            ]
+        }
+    },
+    "features": {
+        "docker-in-docker": {
+            "version": "latest",
+            "moby": true,
+            "dockerDashComposeVersion": "v1"
+        }
+    }
 }

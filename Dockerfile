@@ -1,17 +1,19 @@
 # Use an official Node runtime as a parent image
-FROM node:19
+FROM node:19-alpine as builder
 
 # Set the working directory to /app
 WORKDIR /app
 
 # Copy package.json to the working directory
-COPY package.json ./
-COPY package-lock.json ./
+COPY package*.json ./
 
 RUN npm install
+COPY . .
+ENV GENERATE_SOURCEMAP=false
+RUN npm run build:production
 
-COPY . ./
+FROM nginx:1.22.1-alpine
 
-EXPOSE 3000
-
-CMD ["npm", "run", "start:production"]
+COPY --from=builder /app/build /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
