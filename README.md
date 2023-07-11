@@ -92,12 +92,3 @@ https://docs.amplify.aws/cli/auth/import/#unlink-an-existing-cognito-user-pool-o
 
 Amplify retrieve user authentication
 https://medium.com/@dantasfiles/three-methods-to-get-user-information-in-aws-amplify-authentication-e4e39e658c33
-
-# Notes 2
-
-
-1. Agregar atributo `data-id-field`. Buscar en el editor el elemento `input` que contenga `onKeyDown='return enterKeyIsTab(event);' data-default='1000'`, agrega este atributo al padre del `td` buscando.
-
-1. Agregar atributo `data-name-field`. Buscar en el editor el elemento `input` que contenga `onKeyDown='return enterKeyIsTab(event);' data-default=''`, agrega este atributo al padre del `td` buscando.
-
-1. Agregar `data-grade-field`. Buscar en el editor el elemento `object` que contenga `emailAttachment='Grade: `. Copia el campo de excel (generalmente J62 u O62). Busca el elemento `td` que contenga ese campo de excel. Ahi vas a agregar dicho atributo
