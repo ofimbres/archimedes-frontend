@@ -1,12 +1,12 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState, useContext } from 'react';
 import { useLocation } from "react-router-dom";
-import { useAuthenticator } from '@aws-amplify/ui-react';
+import { AuthContext } from '../../contexts/AuthContext'
 
 const ViewExerciseResults = () =>  {
     const endpoint = process.env.REACT_APP_BACKEND_API_ENDPOINT;
     const { state } = useLocation();
 
-    const { user } = useAuthenticator((context) => [context.user]);
+    const authContext = useContext(AuthContext)
 
     const [exerciseResults, setExerciseResults] = useState([]);
     const [exerciseResult, setExerciseResult] = useState({});
@@ -21,7 +21,7 @@ const ViewExerciseResults = () =>  {
         headers.append('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, PUT, OPTIONS');
         headers.append('Access-Control-Allow-Headers', 'Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With');
         headers.append('Access-Control-Allow-Credentials', 'true');
-        headers.append('Authorization', 'Bearer ' + user.signInUserSession.accessToken.jwtToken);
+        headers.append('Authorization', 'Bearer ' + authContext.sessionInfo.accessToken);
 
         // Simple POST request with a JSON body using fetch
         const requestOptions = {

@@ -1,52 +1,94 @@
 
-import './styles/index.css';
 import 'bootstrap/dist/css/bootstrap.css';
 import 'bootstrap/dist/js/bootstrap.js';
-import  { Routes, Route, useLocation } from "react-router-dom";
-import '@aws-amplify/ui-react/styles.css';
+import './styles/index.css';
 
-import { Amplify } from 'aws-amplify';
-import { awsExports } from './aws-exports';
+import  { BrowserRouter, Routes, Route } from "react-router-dom";
 
-import Home from './components/Home';
-import About from './components/About';
-import Login from './components/Login';
-import NavBar from './components/NavBar';
-import StartExercise from './components/StartExercise';
-import SelectExercise from './components/SelectExercise';
-import ViewExerciseResults from './components/ViewExerciseResults';
+import AuthProvider, { AuthIsSignedIn, AuthIsNotSignedIn } from './contexts/AuthContext'
 
-import { useAuthenticator } from '@aws-amplify/ui-react';
+import Home from './routes/student/Home';
+import Landing from './routes/Landing';
 
-Amplify.configure(awsExports);
+import SignIn from './routes/auth/SignIn';
 
-export default function App() {
-  const { authStatus } = useAuthenticator((context) => [context.user]);
-  const isLoggedIn = authStatus === 'authenticated';
+import NavigationBar from './components/student/NavigationBar';
+import StartExercise from './components/student/StartExercise';
+import SelectExercise from './components/student/SelectExercise';
+import ViewExerciseResults from './components/student/ViewExerciseResults';
+// import STAARRedesign from './components/student/STAARRedesign';
 
-  const location = useLocation();
+  const SignInRoute = () => (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/signin" element={<SignIn />} />
+        <Route path="/" element={<Landing />} />
+      </Routes>
+    </BrowserRouter>
+  )
 
-  if (!isLoggedIn) {
-    return <Login></Login>
-  }
+  const StudentRoute = () => (
+    <BrowserRouter>
+      <NavigationBar />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/exercise/select" element={<SelectExercise />} />
+        <Route path="/exercise/start" element={<StartExercise />} />
+        <Route path="/exercise/completed" element={<ViewExerciseResults />} />
+      </Routes>
+    </BrowserRouter>
+  )
 
-  return (
-      <div className="App">
-        { location.pathname !== '/exercise/start' ? (
-        <header className="App-header">
-          <NavBar></NavBar>
-        </header>
-        ) : (<div></div>)}
+  const TeacherRoute = () => (
+    <BrowserRouter>
+      <Routes>
+      </Routes>
+    </BrowserRouter>
+  )
 
-        <div className="content">
-          <Routes>
-            <Route path="/" element={<Home></Home>} />
-            <Route path="/about" element={<About></About>} />
-            <Route path="/exercise/select" element={<SelectExercise />} />
-            <Route path="/exercise/start" element={<StartExercise />} />
-            <Route path="/exercise/completed" element={<ViewExerciseResults />} />
-          </Routes>
-        </div>
-      </div>
+  const AdminRoute = () => (
+    <BrowserRouter>
+      <Routes>
+      </Routes>
+    </BrowserRouter>
+  )
+
+  const App = () => (
+    <div className="App" >
+      <AuthProvider>
+        <AuthIsSignedIn role="students">
+          <StudentRoute />
+        </AuthIsSignedIn>
+        <AuthIsSignedIn role="teachers">
+          <TeacherRoute />
+        </AuthIsSignedIn>
+        <AuthIsSignedIn role="admins">
+          <AdminRoute />
+        </AuthIsSignedIn>
+        <AuthIsNotSignedIn>
+          <SignInRoute />
+        </AuthIsNotSignedIn>
+      </AuthProvider>
+    </div>
   );
-}
+
+  export default App;
+
+  //return (
+
+      // <div className="App">
+      //   { location.pathname !== '/exercise/start' ? (
+      //   <header className="App-header">
+      //     <NavBar></NavBar>
+      //   </header>
+      //   ) : (<div></div>)}
+
+      //   <div className="content">
+      //     { isStudent ? (
+      //     <Routes>
+
+      //     </Routes>
+      //   </div>
+      // </div>
+//  );
+//}

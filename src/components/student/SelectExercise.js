@@ -1,12 +1,13 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useContext } from 'react';
 import {  Link } from "react-router-dom";
-import { useAuthenticator } from '@aws-amplify/ui-react';
+import { AuthContext } from '../../contexts/AuthContext'
+
 import './SelectExercise.css';
 import "bootstrap-icons/font/bootstrap-icons.css";
 
 const SelectExercise = () => {
 
-    const { user } = useAuthenticator((context) => [context.user]);
+    const authContext = useContext(AuthContext)
 
     const [topicList, setTopicList] = useState([]);
     const [exerciseList, setExerciseList] = useState([]);
@@ -21,7 +22,7 @@ const SelectExercise = () => {
         headers.append('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, PUT, OPTIONS');
         headers.append('Access-Control-Allow-Headers', 'Content-Type, Access-Control-Allow-Headers, Access-Control-Allow-Origin, Authorization, X-Requested-With');
         headers.append('Access-Control-Allow-Credentials', 'true');
-        headers.append('Authorization', 'Bearer ' + user.signInUserSession.accessToken.jwtToken);
+        headers.append('Authorization', 'Bearer ' + authContext.sessionInfo.accessToken);
 
         const requestOptions = {
             headers: headers
@@ -54,7 +55,7 @@ const SelectExercise = () => {
         headers.append('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, PUT, OPTIONS');
         headers.append('Access-Control-Allow-Headers', 'Content-Type, Access-Control-Allow-Headers, Access-Control-Allow-Origin, Authorization, X-Requested-With');
         headers.append('Access-Control-Allow-Credentials', 'true');
-        headers.append('Authorization', 'Bearer ' + user.signInUserSession.accessToken.jwtToken);
+        headers.append('Authorization', 'Bearer ' + authContext.sessionInfo.accessToken);
 
         const requestOptions = {
             headers: headers
@@ -86,7 +87,7 @@ const SelectExercise = () => {
                                     <div className="collapse" id={e.id + "-collapse"}>
                                         <ul className="btn-toggle-nav list-unstyled fw-normal pb-1 small">
                                             {e.descendants.map(e2 => 
-                                            <li key={e2.id}><a href="#" className="link-dark rounded" onClick={() => selectTopic(e.id, e2.id)}>{e2.name}</a></li>
+                                            <li key={e2.id}><a href="/#" className="link-dark rounded" onClick={() => selectTopic(e.id, e2.id)}>{e2.name}</a></li>
                                             )}
                                         </ul>
                                     </div>
@@ -101,8 +102,8 @@ const SelectExercise = () => {
                             <div className="list-group">
                                 {exerciseList.map(e => 
                                 <Link key={e.id}  to="/exercise/start" state={ e.id } className="list-group-item list-group-item-action">
-                                    <div class="d-flex">
-                                        <div class="icon-square bg-warning text-dark flex-shrink-0 me-3">
+                                    <div className="d-flex">
+                                        <div className="icon-square bg-warning text-dark flex-shrink-0 me-3">
                                             { e.classification === "miniquiz" ? (
                                                                             <i className="bi bi-bookmark-check-fill"></i>
                                                                         ) : "" }

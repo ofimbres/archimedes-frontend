@@ -23,3 +23,7 @@ body, html, .App, #root, .content {
   margin: 0; 
   padding: 0
 }
+
+.carousel-item {
+  transition: none;
+}

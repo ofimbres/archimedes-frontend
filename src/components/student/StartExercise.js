@@ -1,16 +1,19 @@
-import React, {  useCallback, useEffect, useState } from 'react';
+import React, {  useCallback, useEffect, useState, useContext } from 'react';
 import {  Navigate, useLocation } from "react-router-dom";
-import { useAuthenticator } from '@aws-amplify/ui-react';
+import { AuthContext } from '../../contexts/AuthContext'
 
 const StartExercise = () => {
+
+    const authContext = useContext(AuthContext)
+
+    const username = 'ofimbres'
+    const fullname = 'Oscar Fimbres' // user.attributes.given_name + ' ' + user.attributes.family_name
 
     const miniquizEndpoint = process.env.REACT_APP_MINIQUIZ_ENDPOINT;
     const { state } = useLocation();
     const exerciseId = state; // WN16
 
     const [isCompleted, setCompleted] = useState(false);
-
-    const { user } = useAuthenticator((context) => [context.user]);
 
     const handleOnMessage = useCallback((event) => {
         //if (event.origin !== miniquizEndpoint)
@@ -20,7 +23,7 @@ const StartExercise = () => {
             worksheetContentCopy: '<!DOCTYPE html>' + event.data.worksheetCopy,
             exerciseId: exerciseId,
             classroomId: 'e46e7191-e31d-434a-aba3-b9a9c187a632',
-            studentId: user.username,
+            studentId: username,
             score: event.data.grade
         }
 
@@ -32,7 +35,7 @@ const StartExercise = () => {
         headers.append('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, PUT, OPTIONS');
         headers.append('Access-Control-Allow-Headers', 'Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With');
         headers.append('Access-Control-Allow-Credentials', 'true');
-        headers.append('Authorization', 'Bearer ' + user.signInUserSession.accessToken.jwtToken);
+        headers.append('Authorization', 'Bearer ' + authContext.sessionInfo.accessToken);
 
         // Simple POST request with a JSON body using fetch
         const requestOptions = {
@@ -50,7 +53,7 @@ const StartExercise = () => {
     });
 
     const handleOnLoad = useCallback(event => {
-        const message = { studentId: user.username, studentName: user.attributes.given_name + ' ' + user.attributes.family_name }; 
+        const message = { studentId: username, studentName: fullname }; 
         event.target.contentWindow.postMessage(message, '*');
     });
 
@@ -72,7 +75,7 @@ const StartExercise = () => {
     }, [handleOnMessage, handleOnLoad]);
 
     if (isCompleted) {
-        let state = { studentId: user.username, classroomId: 'e46e7191-e31d-434a-aba3-b9a9c187a632', exerciseId : exerciseId };
+        let state = { studentId: username, classroomId: 'e46e7191-e31d-434a-aba3-b9a9c187a632', exerciseId : exerciseId };
         return <Navigate to="/exercise/completed" state={ state } />
     }
 
