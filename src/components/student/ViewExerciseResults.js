@@ -48,7 +48,7 @@ const ViewExerciseResults = () =>  {
 
             hasFetchedData.current = true;
         }
-    }, []);
+    });
     
     return (
         <div className="ExerciseResults">

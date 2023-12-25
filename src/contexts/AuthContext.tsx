@@ -6,6 +6,7 @@ export enum AuthStatus {
   Loading,
   SignedIn,
   SignedOut,
+  InProcess
 }
 
 export interface IAuth {
@@ -63,7 +64,8 @@ const AuthProvider = ({ children }: Props) => {
         setSessionInfo({
           accessToken: session.accessToken.jwtToken,
           refreshToken: session.refreshToken.token,
-          groups: session.accessToken.payload['cognito:groups']
+          groups: session.accessToken.payload['cognito:groups'],
+          username: session.accessToken.payload['username'],
         })
         window.localStorage.setItem('accessToken', `${session.accessToken.jwtToken}`)
         window.localStorage.setItem('refreshToken', `${session.refreshToken.token}`)
@@ -86,7 +88,7 @@ const AuthProvider = ({ children }: Props) => {
   async function signInWithEmail(username: string, password: string) {
     try {
       await cognito.signInWithEmail(username, password)
-      setAuthStatus(AuthStatus.SignedIn)
+      setAuthStatus(AuthStatus.InProcess)
     } catch (err) {
       setAuthStatus(AuthStatus.SignedOut)
       throw err

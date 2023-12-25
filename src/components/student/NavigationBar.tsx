@@ -4,6 +4,7 @@ import { useContext } from 'react'
 import { AuthContext } from '../../contexts/AuthContext'
 
 export default function NavigationBar() {
+    const location = useLocation();
 
     const authContext = useContext(AuthContext)
     
@@ -18,16 +19,18 @@ export default function NavigationBar() {
       roleName = 'admin';
     } else if (isTeacher) {
       roleName = 'teacher';
-    } else {
+    } else if (isStudent) {
       roleName = 'student';
+    } else {
+      throw new Error('Invalid role'); 
     }
+
     const username = authContext.attrInfo?.find((attr: any) => attr.Name === 'email').Value
 
     const signOut = () => {
       authContext.signOut()
     };
 
-    const location = useLocation();
     if (location.pathname === '/exercise/start') {
       return null;
     }
@@ -46,12 +49,6 @@ export default function NavigationBar() {
               </li>
               <li className="nav-item">
                 <Link className="nav-link" to="/exercise/select">Mini-Quizzes</Link>
-              </li>
-              <li className="nav-item">
-                <Link className="nav-link" aria-current="page" to="/staar-redesign">STAAR Redesign</Link>
-              </li>
-              <li className="nav-item">
-                <Link className="nav-link" aria-current="page" to="/about">About</Link>
               </li>
             </ul>
             <ul className="navbar-nav">

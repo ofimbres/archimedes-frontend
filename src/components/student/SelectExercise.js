@@ -8,6 +8,7 @@ import "bootstrap-icons/font/bootstrap-icons.css";
 const SelectExercise = () => {
 
     const authContext = useContext(AuthContext)
+    const endpoint = process.env.REACT_APP_BACKEND_API_ENDPOINT;
 
     const [topicList, setTopicList] = useState([]);
     const [exerciseList, setExerciseList] = useState([]);
@@ -15,39 +16,48 @@ const SelectExercise = () => {
 
     useEffect(() => {
 
-        let headers = new Headers();
-        headers.append('Content-Type', 'application/json');
-        headers.append('Accept', 'application/json');
-        headers.append('Access-Control-Allow-Origin', 'http://localhost:3000');
-        headers.append('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, PUT, OPTIONS');
-        headers.append('Access-Control-Allow-Headers', 'Content-Type, Access-Control-Allow-Headers, Access-Control-Allow-Origin, Authorization, X-Requested-With');
-        headers.append('Access-Control-Allow-Credentials', 'true');
-        headers.append('Authorization', 'Bearer ' + authContext.sessionInfo.accessToken);
-
-        const requestOptions = {
-            headers: headers
-        };
-
         if (!hasFetchedData.current) {
-            const endpoint = process.env.REACT_APP_BACKEND_API_ENDPOINT;
-            fetch(`${endpoint}/api/v1/topic/`, requestOptions)
-                .then(response => response.json())
-                .then(data => {
-                    setTopicList(data);
-                });
-            
-            var topic = 'ALGEBRAIC_EXPRESSIONS';
-            var subtopic = 'AX';
-            selectTopic(topic, subtopic);
-
+            getTopicsAndSubtopics();
             hasFetchedData.current = true;
         }
 
         return () => {
         };
-    }, []);
+    });
 
-    function selectTopic(topicId, subtopicId) {
+    function getTopicsAndSubtopics() {
+        let headers = createHeaders(authContext.sessionInfo.accessToken);
+
+        const requestOptions = {
+            headers: headers
+        };
+
+        fetch(`${endpoint}/api/v1/topic/`, requestOptions)
+        .then(response => response.json())
+        .then(data => {
+            setTopicList(data);
+
+            if (data.length > 0 && data[0].descendants.length > 0) {
+                getExerciseList(data[0].id, data[0].descendants[0].id);
+            }
+        });
+    }
+
+    function getExerciseList(topicId, subtopicId) {
+        let headers = createHeaders(authContext.sessionInfo.accessToken);
+
+        const requestOptions = {
+            headers: headers
+        };
+
+        fetch(`${endpoint}/api/v1/topic/${topicId}/subtopic/${subtopicId}/exercises/`, requestOptions)
+        .then(response => response.json())
+        .then(data => {
+            setExerciseList(data);
+        });
+    }
+
+    function createHeaders(accessToken) {
         let headers = new Headers();
         headers.append('Content-Type', 'application/json');
         headers.append('Accept', 'application/json');
@@ -55,18 +65,8 @@ const SelectExercise = () => {
         headers.append('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, PUT, OPTIONS');
         headers.append('Access-Control-Allow-Headers', 'Content-Type, Access-Control-Allow-Headers, Access-Control-Allow-Origin, Authorization, X-Requested-With');
         headers.append('Access-Control-Allow-Credentials', 'true');
-        headers.append('Authorization', 'Bearer ' + authContext.sessionInfo.accessToken);
-
-        const requestOptions = {
-            headers: headers
-        };
-
-        const endpoint = process.env.REACT_APP_BACKEND_API_ENDPOINT;
-        fetch(`${endpoint}/api/v1/topic/${topicId}/subtopic/${subtopicId}/exercises/`, requestOptions)
-        .then(response => response.json())
-        .then(data => {
-            setExerciseList(data);
-        });
+        headers.append('Authorization', 'Bearer ' + accessToken);
+        return headers;
     }
 
     return (
@@ -87,7 +87,9 @@ const SelectExercise = () => {
                                     <div className="collapse" id={e.id + "-collapse"}>
                                         <ul className="btn-toggle-nav list-unstyled fw-normal pb-1 small">
                                             {e.descendants.map(e2 => 
-                                            <li key={e2.id}><a href="/#" className="link-dark rounded" onClick={() => selectTopic(e.id, e2.id)}>{e2.name}</a></li>
+                                            <li key={e2.id}>
+                                                <Link key={e2.id} className="link-dark rounded"onClick={() => getExerciseList(e.id, e2.id)}>{e2.name}</Link>
+                                            </li>
                                             )}
                                         </ul>
                                     </div>

@@ -32,9 +32,9 @@ const SignIn = () => {
       }
     }
   
-    const passwordResetClicked = async () => {
+    /*const passwordResetClicked = async () => {
       navigate('/requestcode')
-    }
+    }*/
 
     const handleUsername = (e: any) => {
         setUsername(e.target.value)

@@ -1,5 +1,5 @@
 {
-  "name": "amplify-ui-demo",
+  "name": "archimedes-frontend",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -14,12 +14,17 @@
     "react-bootstrap": "^2.8.0",
     "react-dom": "^18.2.0",
     "react-router-dom": "^6.3.0",
-    "typescript": "^5.2.2",
+    "typescript": "^5.3.3",
     "web-vitals": "^2.1.4"
   },
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
-    "react-scripts": "5.0.1"
+    "react-scripts": "^5.0.1"
+  },
+  "overrides": {
+    "react-scripts": {
+      "typescript": "^5"
+    }
   },
   "scripts": {
     "start": "env-cmd -f .env.development react-scripts start",

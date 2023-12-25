@@ -4,10 +4,10 @@ import { AuthContext } from '../../contexts/AuthContext'
 
 const StartExercise = () => {
 
-    const authContext = useContext(AuthContext)
+    const authContext = useContext(AuthContext);
 
-    const username = 'ofimbres'
-    const fullname = 'Oscar Fimbres' // user.attributes.given_name + ' ' + user.attributes.family_name
+    const username = authContext.sessionInfo.username;
+    const fullname = authContext.attrInfo.find((attr) => attr.Name === 'given_name').Value + ' ' + authContext.attrInfo.find((attr) => attr.Name === 'family_name').Value;
 
     const miniquizEndpoint = process.env.REACT_APP_MINIQUIZ_ENDPOINT;
     const { state } = useLocation();
@@ -27,15 +27,7 @@ const StartExercise = () => {
             score: event.data.grade
         }
 
-        let headers = new Headers();
-
-        headers.append('Content-Type', 'application/json');
-        //headers.append('Accept', 'application/json');
-        headers.append('Access-Control-Allow-Origin', 'http://localhost:3000');
-        headers.append('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, PUT, OPTIONS');
-        headers.append('Access-Control-Allow-Headers', 'Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With');
-        headers.append('Access-Control-Allow-Credentials', 'true');
-        headers.append('Authorization', 'Bearer ' + authContext.sessionInfo.accessToken);
+        let headers = createHeaders(authContext.sessionInfo.accessToken);
 
         // Simple POST request with a JSON body using fetch
         const requestOptions = {
@@ -50,12 +42,12 @@ const StartExercise = () => {
             .then(data => {
                 setCompleted(true);
             });
-    });
+    }, [authContext.sessionInfo.accessToken, exerciseId]);
 
     const handleOnLoad = useCallback(event => {
         const message = { studentId: username, studentName: fullname }; 
         event.target.contentWindow.postMessage(message, '*');
-    });
+    }, []);
 
     useEffect(() => {
         window.addEventListener("message", handleOnMessage);
@@ -72,11 +64,23 @@ const StartExercise = () => {
                 frameEl.removeEventListener("load", handleOnLoad);
         };
 
-    }, [handleOnMessage, handleOnLoad]);
+    }, [isCompleted, handleOnMessage, handleOnLoad]);
 
     if (isCompleted) {
         let state = { studentId: username, classroomId: 'e46e7191-e31d-434a-aba3-b9a9c187a632', exerciseId : exerciseId };
         return <Navigate to="/exercise/completed" state={ state } />
+    }
+
+    function createHeaders(accessToken) {
+        let headers = new Headers();
+        headers.append('Content-Type', 'application/json');
+        headers.append('Accept', 'application/json');
+        headers.append('Access-Control-Allow-Origin', 'http://localhost:3000');
+        headers.append('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, PUT, OPTIONS');
+        headers.append('Access-Control-Allow-Headers', 'Content-Type, Access-Control-Allow-Headers, Access-Control-Allow-Origin, Authorization, X-Requested-With');
+        headers.append('Access-Control-Allow-Credentials', 'true');
+        headers.append('Authorization', 'Bearer ' + accessToken);
+        return headers;
     }
 
     return (
