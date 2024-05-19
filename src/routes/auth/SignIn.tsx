@@ -1,17 +1,18 @@
 import React from 'react'
 import { useState, useContext } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
+import { useValidUsername, useValidPassword } from '../../hooks/UseAuthHooks'
 import { AuthContext } from '../../contexts/AuthContext'
 
 import "./SignIn.css"
 
 const SignIn = () => {
 
-    const [ username, setUsername ] = useState('') //useValidUsername('')
-    const [ password, setPassword ] = useState('') //useValidPassword('')
+    const { username, setUsername, usernameIsValid } = useValidUsername('')
+    const { password, setPassword, passwordIsValid } = useValidPassword('')
     const [error, setError] = useState('')
   
-    //const isValid = !usernameIsValid || username.length === 0 || !passwordIsValid || password.length === 0
+    const isValid = !usernameIsValid || username.length === 0 || !passwordIsValid || password.length === 0
   
     const navigate = useNavigate()
   
@@ -31,10 +32,6 @@ const SignIn = () => {
         }
       }
     }
-  
-    /*const passwordResetClicked = async () => {
-      navigate('/requestcode')
-    }*/
 
     const handleUsername = (e: any) => {
         setUsername(e.target.value)
@@ -47,7 +44,7 @@ const SignIn = () => {
     return (
         <main className="form-signin">
             <form onSubmit={handleSignIn}>
-                <img className="mb-4" src="../assets/brand/bootstrap-logo.svg" alt="" width="72" height="57" />
+                <img className="mb-4" src="archimedes-logo.jpg" alt="" width="57" height="57" />
                 <h1 className="h3 mb-3 fw-normal">Please sign in</h1>
 
                 <div className="form-floating">
@@ -64,10 +61,20 @@ const SignIn = () => {
                     <input type="checkbox" value="remember-me" /> Remember me
                 </label>
                 </div>
-                <button className="w-100 btn btn-lg btn-primary" type="submit">Sign in</button>
+                <button disabled={isValid} className="w-100 btn btn-lg btn-primary" type="submit">Sign in</button>
 
                 {error}
-                <p className="mt-5 mb-3 text-muted">&copy; 2017–2021</p>
+
+                <div className="mt-4">
+                  <div className="d-flex justify-content-center">
+                    Don't have an account? <Link to="/signup" className="ms-2 text-decoration-none text-muted">Sign Up</Link>
+                  </div>
+                  <div className="d-flex justify-content-center">
+                    <Link to="/requestcode" className="text-decoration-none text-muted">Forgot your password?</Link>
+                  </div>
+                </div>
+
+                <p className="mt-5 mb-3 text-muted">&copy; 2017–2023</p>
             </form>
         </main>
     );

@@ -23,6 +23,7 @@ export interface IAuth {
   changePassword?: any
   getAttributes?: any
   setAttribute?: any
+  //addUserToGroup?:any
 }
 
 const defaultState: IAuth = {
@@ -95,9 +96,9 @@ const AuthProvider = ({ children }: Props) => {
     }
   }
 
-  async function signUpWithEmail(username: string, email: string, password: string) {
+  async function signUpWithEmail(givenName: string, familyName: string, username: string, email: string, password: string) {
     try {
-      await cognito.signUpUserWithEmail(username, email, password)
+      await cognito.signUpUserWithEmail(givenName, familyName, username, email, password)
     } catch (err) {
       throw err
     }
@@ -166,6 +167,18 @@ const AuthProvider = ({ children }: Props) => {
       throw err
     }
   }
+
+  // async function addUserToGroup(username: string, groupName: string) {
+  //   var params = {
+  //     GroupName: 'STRING_VALUE', /* required */
+  //     UserPoolId: 'STRING_VALUE', /* required */
+  //     Username: 'STRING_VALUE' /* required */
+  //   };
+  //   cognito.adminAddUserToGroup(params, function(err, data) {
+  //     if (err) console.log(err, err.stack); // an error occurred
+  //     else     console.log(data);           // successful response
+  //   });
+  // }
 
   const state: IAuth = {
     authStatus,

@@ -5,7 +5,9 @@
 	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
 	"image": "mcr.microsoft.com/devcontainers/javascript-node:18",
 	"features": {
-		"ghcr.io/devcontainers-contrib/features/bash-command:1": {}
+		"ghcr.io/devcontainers-contrib/features/bash-command:1": {},
+		"ghcr.io/devcontainers/features/docker-in-docker:2": {},
+		"aws-cli": "latest"
 	},
 
 	// Features to add to the dev container. More info: https://containers.dev/features.
@@ -15,7 +17,14 @@
 	// "forwardPorts": [],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
-	"postCreateCommand": "npm install"
+	"postCreateCommand": "npm install",
+	"customizations": {
+		"vscode": {
+		  "extensions": [
+			"ms-azuretools.vscode-docker"
+		  ]
+		}
+	  }
 
 	// Configure tool-specific properties.
 	// "customizations": {},
