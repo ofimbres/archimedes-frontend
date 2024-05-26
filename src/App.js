@@ -33,10 +33,6 @@ import TeachertHome from './routes/teacher/Home';
         <Route path="/forgotpassword" element={<ForgotPassword />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/verify" element={<VerifyCode />} />
-        <Route path="/health" element={
-          <h3>The App is Healthy</h3>
-        }>
-        </Route>
       </Routes>
     </BrowserRouter>
   )
