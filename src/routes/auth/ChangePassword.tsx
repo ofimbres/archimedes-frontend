@@ -2,7 +2,7 @@ import React, { useState, useContext } from 'react'
 
 import { useNavigate } from 'react-router-dom'
 
-// import { useValidPassword } from '../../hooks/useAuthHooks'
+import { useValidPassword } from '../../hooks/UseAuthHooks'
 
 import { AuthContext } from '../../contexts/AuthContext'
 

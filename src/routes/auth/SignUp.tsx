@@ -15,6 +15,7 @@ const SignUp: React.FunctionComponent<{}> = () => {
   const { username, setUsername, usernameIsValid } = useValidUsername('')
   const { givenName, setGivenName, givenNameIsValid } = useValidGivenName('')
   const { familyName, setFamilyName, familyNameIsValid } = useValidFamilyName('')
+  const [userType, setUserType] = useState('');
   const [error, setError] = useState('')
   const [created, setCreated] = useState(false)
 
@@ -46,6 +47,20 @@ const SignUp: React.FunctionComponent<{}> = () => {
       }
     }
   }
+
+  const userTypeButtons = (
+    <div className="d-flex flex-column align-items-center">
+    <p className="m-1">Who are you?</p>
+    <div className="d-flex justify-content-center">
+      <button onClick={() => setUserType('students')} className="btn btn-primary btn-lg m-1">
+        I am a Student
+      </button>
+      <button onClick={() => setUserType('teachers')} className="btn btn-primary btn-lg m-1">
+        I am a Teacher
+      </button>
+    </div>
+  </div>
+);
 
   const signUp = (
     <div className="container" style={{width: "80%"}}>
@@ -116,7 +131,7 @@ const SignUp: React.FunctionComponent<{}> = () => {
                     </div>
                 </div>
 
-                {!created ? signUp : accountCreated}
+                {!userType ? userTypeButtons : !created ? signUp : accountCreated}
             </div>
             </div>
         </div>
