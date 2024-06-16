@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react'
 
+import { jwtDecode } from "jwt-decode";
+
 import * as cognito from '../libs/cognito'
 
 export enum AuthStatus {
@@ -61,17 +63,15 @@ const AuthProvider = ({ children }: Props) => {
     async function getSessionInfo() {
       try {
         const session: any = await getSession()
-
         setSessionInfo({
           accessToken: session.accessToken.jwtToken,
           refreshToken: session.refreshToken.token,
           groups: session.accessToken.payload['cognito:groups'],
           username: session.accessToken.payload['username'],
         })
-        window.localStorage.setItem('accessToken', `${session.accessToken.jwtToken}`)
-        window.localStorage.setItem('refreshToken', `${session.refreshToken.token}`)
-        await setAttribute({ Name: 'website', Value: 'https://github.com/dbroadhurst/aws-cognito-react' })
-        
+        //window.localStorage.setItem('accessToken', `${session.accessToken.jwtToken}`)
+        //window.localStorage.setItem('refreshToken', `${session.refreshToken.token}`)
+        // await setAttribute({ Name: 'website', Value: 'https://github.com/dbroadhurst/aws-cognito-react' })
         const attr: any = await getAttributes()
         setAttrInfo(attr)
         setAuthStatus(AuthStatus.SignedIn)
@@ -88,7 +88,29 @@ const AuthProvider = ({ children }: Props) => {
 
   async function signInWithEmail(username: string, password: string) {
     try {
-      await cognito.signInWithEmail(username, password)
+      const endpoint = process.env.REACT_APP_BACKEND_API_ENDPOINT;
+      let headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Access-Control-Allow-Origin': 'http://localhost:3000',
+        'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, PUT, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Access-Control-Allow-Headers, Access-Control-Allow-Origin, Authorization, X-Requested-With',
+        'Access-Control-Allow-Credentials': 'true',
+      }
+
+      let body = {
+        username: username,
+        password: password
+      }
+      let response = await fetch(`${endpoint}/api/v1/user/login`, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify(body)
+      })
+      let data = await response.json()
+      localStorage.setItem('lastUsername', data.username);
+      localStorage.setItem('accessToken', data.accessToken);
+      //await cognito.signInWithEmail(username, password)
       setAuthStatus(AuthStatus.InProcess)
     } catch (err) {
       setAuthStatus(AuthStatus.SignedOut)
@@ -105,7 +127,9 @@ const AuthProvider = ({ children }: Props) => {
   }
 
   function signOut() {
-    cognito.signOut()
+    // cognito.signOut()
+    localStorage.removeItem('lastUsername');
+    localStorage.removeItem('accessToken');
     setAuthStatus(AuthStatus.SignedOut)
   }
 
@@ -119,8 +143,24 @@ const AuthProvider = ({ children }: Props) => {
 
   async function getSession() {
     try {
-      const session = await cognito.getSession()
-      return session
+      //const session = await cognito.getSession()
+      //return session;
+      const accessToken = localStorage.getItem("accessToken");
+
+      if (accessToken != null) {
+        const payload = jwtDecode(accessToken);
+
+        return {
+          accessToken: {
+            jwtToken: accessToken,
+            payload: payload
+          },
+          refreshToken: {
+            token: 'refreshToken'
+          }
+        };
+      }
+      return null
     } catch (err) {
       throw err
     }
@@ -128,8 +168,25 @@ const AuthProvider = ({ children }: Props) => {
 
   async function getAttributes() {
     try {
-      const attr = await cognito.getAttributes()
-      return attr
+      //const attr = await cognito.getAttributes()
+      //return attr
+      const username = localStorage.getItem('lastUsername');
+      const endpoint = process.env.REACT_APP_BACKEND_API_ENDPOINT;
+      let headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Access-Control-Allow-Origin': 'http://localhost:3000',
+        'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, PUT, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Access-Control-Allow-Headers, Access-Control-Allow-Origin, Authorization, X-Requested-With',
+        'Access-Control-Allow-Credentials': 'true',
+      }
+
+      let response = await fetch(`${endpoint}/api/v1/user/${username}/attributes`, {
+        method: 'GET',
+        headers: headers
+      })
+      let data = await response.json();
+      return data;
     } catch (err) {
       throw err
     }

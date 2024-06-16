@@ -25,7 +25,7 @@ export default function NavigationBar() {
       throw new Error('Invalid role'); 
     }
 
-    const username = authContext.attrInfo?.find((attr: any) => attr.Name === 'email').Value
+    const username = authContext.attrInfo['email'];
 
     const signOut = () => {
       authContext.signOut()
