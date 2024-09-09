@@ -5,9 +5,10 @@ import { AuthContext } from '../../contexts/AuthContext'
 const StartExercise = () => {
 
     const authContext = useContext(AuthContext);
-
     const username = authContext.sessionInfo.username;
-    const fullname = authContext.attrInfo.find((attr) => attr.Name === 'given_name').Value + ' ' + authContext.attrInfo.find((attr) => attr.Name === 'family_name').Value;
+    const studentId = authContext.attrInfo['custom:userId'];
+
+    const fullname = authContext.attrInfo['given_name'] + ' ' + authContext.attrInfo['family_name']
 
     const miniquizEndpoint = process.env.REACT_APP_MINIQUIZ_ENDPOINT;
     const { state } = useLocation();
@@ -18,12 +19,12 @@ const StartExercise = () => {
     const handleOnMessage = useCallback((event) => {
         //if (event.origin !== miniquizEndpoint)
         //    return;
-        
+        debugger;
         const data = {
             worksheetContentCopy: '<!DOCTYPE html>' + event.data.worksheetCopy,
             exerciseId: exerciseId,
             classroomId: 'e46e7191-e31d-434a-aba3-b9a9c187a632',
-            studentId: username,
+            studentId: studentId,
             score: event.data.grade
         }
 
@@ -37,7 +38,7 @@ const StartExercise = () => {
         };
 
         const endpoint = process.env.REACT_APP_BACKEND_API_ENDPOINT;
-        fetch(`${endpoint}/api/v1/exerciseresult/`, requestOptions)
+        fetch(`${endpoint}/api/v1/exerciseresults/`, requestOptions)
             .then(response => response.text())
             .then(data => {
                 setCompleted(true);
@@ -45,7 +46,7 @@ const StartExercise = () => {
     }, [authContext.sessionInfo.accessToken, exerciseId]);
 
     const handleOnLoad = useCallback(event => {
-        const message = { studentId: username, studentName: fullname }; 
+        const message = { studentId: studentId, studentName: fullname }; 
         event.target.contentWindow.postMessage(message, '*');
     }, []);
 

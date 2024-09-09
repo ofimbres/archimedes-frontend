@@ -102,14 +102,14 @@ const AuthProvider = ({ children }: Props) => {
         username: username,
         password: password
       }
-      let response = await fetch(`${endpoint}/api/v1/user/login`, {
+      let response = await fetch(`${endpoint}/api/v1/auth/login`, {
         method: 'POST',
         headers: headers,
         body: JSON.stringify(body)
       })
       let data = await response.json()
-      localStorage.setItem('lastUsername', data.username);
-      localStorage.setItem('accessToken', data.accessToken);
+      localStorage.setItem('lastUsername', data.user.username);
+      localStorage.setItem('accessToken', data.user.accessToken);
       //await cognito.signInWithEmail(username, password)
       setAuthStatus(AuthStatus.InProcess)
     } catch (err) {
@@ -118,9 +118,33 @@ const AuthProvider = ({ children }: Props) => {
     }
   }
 
-  async function signUpWithEmail(givenName: string, familyName: string, username: string, email: string, password: string) {
+  async function signUpWithEmail(givenName: string, familyName: string, username: string, email: string, password: string, userType: string) {
     try {
-      await cognito.signUpUserWithEmail(givenName, familyName, username, email, password)
+      //await cognito.signUpUserWithEmail(givenName, familyName, username, email, password)
+      const endpoint = process.env.REACT_APP_BACKEND_API_ENDPOINT;
+      let headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Access-Control-Allow-Origin': 'http://localhost:3000',
+        'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, PUT, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Access-Control-Allow-Headers, Access-Control-Allow-Origin, Authorization, X-Requested-With',
+        'Access-Control-Allow-Credentials': 'true',
+      }
+
+      let body = {
+        username: username,
+        password: password,
+        email: email,
+        givenName: givenName,
+        familyName: familyName,
+        userType: userType
+      }
+      let response = await fetch(`${endpoint}/api/v1/auth/register`, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify(body)
+      })
+      let data = await response.text()
     } catch (err) {
       throw err
     }
@@ -133,9 +157,32 @@ const AuthProvider = ({ children }: Props) => {
     setAuthStatus(AuthStatus.SignedOut)
   }
 
+  // TODO
   async function verifyCode(username: string, code: string) {
     try {
-      await cognito.verifyCode(username, code)
+      //await cognito.verifyCode(username, code)
+      //const username = localStorage.getItem('lastUsername');
+      const endpoint = process.env.REACT_APP_BACKEND_API_ENDPOINT;
+      let body = {
+        username: username,
+        confirmationCode: code
+      }
+      let headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Access-Control-Allow-Origin': 'http://localhost:3000',
+        'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, PUT, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Access-Control-Allow-Headers, Access-Control-Allow-Origin, Authorization, X-Requested-With',
+        'Access-Control-Allow-Credentials': 'true',
+      }
+
+      let response = await fetch(`${endpoint}/api/v1/auth/verify-code`, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify(body)
+      })
+      let data = await response.text();
+      return data;
     } catch (err) {
       throw err
     }
@@ -181,7 +228,7 @@ const AuthProvider = ({ children }: Props) => {
         'Access-Control-Allow-Credentials': 'true',
       }
 
-      let response = await fetch(`${endpoint}/api/v1/user/${username}/attributes`, {
+      let response = await fetch(`${endpoint}/api/v1/auth/${username}/attributes`, {
         method: 'GET',
         headers: headers
       })
@@ -203,15 +250,37 @@ const AuthProvider = ({ children }: Props) => {
 
   async function sendCode(username: string) {
     try {
-      await cognito.sendCode(username)
+      //await cognito.sendCode(username)
     } catch (err) {
       throw err
     }
   }
 
-  async function forgotPassword(username: string, code: string, password: string) {
+  async function forgotPassword(username: string) {
     try {
-      await cognito.forgotPassword(username, code, password)
+      //await cognito.forgotPassword(username, code, password)
+      //await cognito.verifyCode(username, code)
+      //const username = localStorage.getItem('lastUsername');
+      const endpoint = process.env.REACT_APP_BACKEND_API_ENDPOINT;
+      let body = {
+        username: username
+      }
+      let headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Access-Control-Allow-Origin': 'http://localhost:3000',
+        'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, PUT, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Access-Control-Allow-Headers, Access-Control-Allow-Origin, Authorization, X-Requested-With',
+        'Access-Control-Allow-Credentials': 'true',
+      }
+
+      let response = await fetch(`${endpoint}/api/v1/auth/forgot-password`, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify(body)
+      })
+      let data = await response.text();
+      return data;
     } catch (err) {
       throw err
     }

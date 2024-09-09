@@ -32,7 +32,7 @@ const SelectExercise = () => {
             headers: headers
         };
 
-        fetch(`${endpoint}/api/v1/topic/`, requestOptions)
+        fetch(`${endpoint}/api/v1/topics/`, requestOptions)
         .then(response => response.json())
         .then(data => {
             setTopicList(data);
@@ -50,7 +50,7 @@ const SelectExercise = () => {
             headers: headers
         };
 
-        fetch(`${endpoint}/api/v1/topic/${topicId}/subtopic/${subtopicId}/exercises/`, requestOptions)
+        fetch(`${endpoint}/api/v1/topics/${topicId}/subtopics/${subtopicId}/exercises`, requestOptions)
         .then(response => response.json())
         .then(data => {
             setExerciseList(data);
@@ -103,7 +103,7 @@ const SelectExercise = () => {
                             <h3>Exercise List</h3>
                             <div className="list-group">
                                 {exerciseList.map(e => 
-                                <Link key={e.id}  to="/exercise/start" state={ e.id } className="list-group-item list-group-item-action">
+                                <Link key={e.exerciseId}  to="/exercise/start" state={ e.exerciseId } className="list-group-item list-group-item-action">
                                     <div className="d-flex">
                                         <div className="icon-square bg-warning text-dark flex-shrink-0 me-3">
                                             { e.classification === "miniquiz" ? (
@@ -111,7 +111,7 @@ const SelectExercise = () => {
                                                                         ) : "" }
                                         </div>
                                         <div>
-                                        {e.id} - {e.name}
+                                        {e.exerciseId} - {e.name}
                                         </div>
                                     </div>
                                 </Link>

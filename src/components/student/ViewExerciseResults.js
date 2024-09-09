@@ -30,17 +30,18 @@ const ViewExerciseResults = () =>  {
         };
 
         if (!hasFetchedData.current) {
+            debugger;
             const classroomId = state.classroomId;
             const studentId = state.studentId;
             const exerciseId = state.exerciseId;
 
-            fetch(`${endpoint}/api/v1/exerciseresult/class/${classroomId}/student/${studentId}/exercise/${exerciseId}`, requestOptions)
+            fetch(`${endpoint}/api/v1/periods/${classroomId}/students/${studentId}/exercises/${exerciseId}/scores`, requestOptions)
             .then(response => response.json())
             .then(data => {
                 setExerciseResult(data)
             });
 
-            fetch(`${endpoint}/api/v1/exerciseresult/class/${classroomId}/exercise/${exerciseId}`, requestOptions)
+            fetch(`${endpoint}/api/v1/periods/${classroomId}/exercises/${exerciseId}/scores`, requestOptions)
             .then(response => response.json())
             .then(data => {
                 setExerciseResults(data)
