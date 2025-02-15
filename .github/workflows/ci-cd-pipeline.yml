@@ -50,10 +50,6 @@ jobs:
           awslogs-group=${{ vars.LOG_GROUP }}
           awslogs-region=${{ vars.AWS_REGION }}
           awslogs-stream-prefix=${{ vars.LOGS_STREAM_PREFIX }}
-        environment-variables: |
-          COGNITO_USER_POOL_ID=${{ vars.COGNITO_USER_POOL_ID }}
-          COGNITO_USER_POOL_CLIENT_ID=${{ vars.COGNITO_USER_POOL_CLIENT_ID }}
-          COGNITO_USER_POOL_CLIENT_NAME=${{ vars.COGNITO_USER_POOL_CLIENT_NAME }}
 
     - name: Deploy Amazon ECS task definition
       uses: aws-actions/amazon-ecs-deploy-task-definition@v2
