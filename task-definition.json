@@ -1,8 +1,8 @@
 {
-    "family": "backendstackec2taskdefinition2E9226A20",
+    "family": "frontendstackec2taskdefinition855D1233",
     "containerDefinitions": [
       {
-        "name": "dev-archimedes-backend-container",
+        "name": "dev-archimedes-frontend-container",
         "cpu": 500,
         "memory": 256,
         "essential": true,
