@@ -30,7 +30,6 @@ const ViewExerciseResults = () =>  {
         };
 
         if (!hasFetchedData.current) {
-            debugger;
             const classroomId = state.classroomId;
             const studentId = state.studentId;
             const exerciseId = state.exerciseId;

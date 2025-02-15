@@ -1,6 +1,7 @@
 import React, {  useCallback, useEffect, useState, useContext } from 'react';
 import {  Navigate, useLocation } from "react-router-dom";
 import { AuthContext } from '../../contexts/AuthContext'
+import { getActivityResults } from '../../libs/apiEndpoints';
 
 const StartExercise = () => {
 
@@ -16,33 +17,15 @@ const StartExercise = () => {
 
     const [isCompleted, setCompleted] = useState(false);
 
-    const handleOnMessage = useCallback((event) => {
+    const handleOnMessage = useCallback(async (event) => {
         //if (event.origin !== miniquizEndpoint)
         //    return;
-        debugger;
-        const data = {
-            worksheetContentCopy: '<!DOCTYPE html>' + event.data.worksheetCopy,
-            exerciseId: exerciseId,
-            classroomId: 'e46e7191-e31d-434a-aba3-b9a9c187a632',
-            studentId: studentId,
-            score: event.data.grade
-        }
-
-        let headers = createHeaders(authContext.sessionInfo.accessToken);
-
-        // Simple POST request with a JSON body using fetch
-        const requestOptions = {
-            method: 'POST',
-            body: JSON.stringify(data),
-            headers: headers
-        };
-
-        const endpoint = process.env.REACT_APP_BACKEND_API_ENDPOINT;
-        fetch(`${endpoint}/api/v1/exerciseresults/`, requestOptions)
-            .then(response => response.text())
+        
+        await getActivityResults('<!DOCTYPE html>' + event.data.worksheetCopy, exerciseId, 'e46e7191-e31d-434a-aba3-b9a9c187a632', studentId, event.data.grade, authContext.sessionInfo.accessToken)
             .then(data => {
                 setCompleted(true);
             });
+
     }, [authContext.sessionInfo.accessToken, exerciseId]);
 
     const handleOnLoad = useCallback(event => {
@@ -70,18 +53,6 @@ const StartExercise = () => {
     if (isCompleted) {
         let state = { studentId: username, classroomId: 'e46e7191-e31d-434a-aba3-b9a9c187a632', exerciseId : exerciseId };
         return <Navigate to="/exercise/completed" state={ state } />
-    }
-
-    function createHeaders(accessToken) {
-        let headers = new Headers();
-        headers.append('Content-Type', 'application/json');
-        headers.append('Accept', 'application/json');
-        headers.append('Access-Control-Allow-Origin', 'http://localhost:3000');
-        headers.append('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, PUT, OPTIONS');
-        headers.append('Access-Control-Allow-Headers', 'Content-Type, Access-Control-Allow-Headers, Access-Control-Allow-Origin, Authorization, X-Requested-With');
-        headers.append('Access-Control-Allow-Credentials', 'true');
-        headers.append('Authorization', 'Bearer ' + accessToken);
-        return headers;
     }
 
     return (

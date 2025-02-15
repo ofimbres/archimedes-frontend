@@ -1,0 +1,28 @@
+{
+    "family": "backendstackec2taskdefinition2E9226A20",
+    "containerDefinitions": [
+      {
+        "name": "dev-archimedes-backend-container",
+        "cpu": 500,
+        "memory": 256,
+        "essential": true,
+        "portMappings": [
+          {
+            "containerPort": 80,
+            "hostPort": 80,
+            "protocol": "tcp"
+          }
+        ],
+        "healthCheck": {
+          "command": [
+            "CMD-SHELL",
+            "curl -f http://localhost:80/ || exit 1"
+          ]
+        }
+      }
+    ],
+    "networkMode": "awsvpc",
+    "requiresCompatibilities": [
+      "EC2"
+    ]
+  }

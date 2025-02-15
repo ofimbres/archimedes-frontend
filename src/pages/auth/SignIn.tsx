@@ -1,6 +1,6 @@
 import React from 'react'
-import { useState, useContext } from 'react'
-import { useNavigate, Link } from 'react-router-dom'
+import { useState, useContext, useEffect } from 'react'
+import { useNavigate, Link, useLocation } from 'react-router-dom'
 import { useValidUsername, useValidPassword } from '../../hooks/UseAuthHooks'
 import { AuthContext } from '../../contexts/AuthContext'
 
@@ -17,6 +17,13 @@ const SignIn = () => {
     const navigate = useNavigate()
   
     const authContext = useContext(AuthContext)
+
+    const location = useLocation();
+    
+    useEffect(() => {
+      document.body.classList.add('signin-page');
+      return () => { document.body.classList.remove('signin-page'); };
+    }, [location]);
   
     const handleSignIn = async (e: any) => {
       e.preventDefault()
@@ -42,6 +49,7 @@ const SignIn = () => {
     }
 
     return (
+        <div className="signin-page">
         <main className="form-signin">
             <form onSubmit={handleSignIn}>
                 <img className="mb-4" src="archimedes-logo.jpg" alt="" width="57" height="57" />
@@ -77,6 +85,7 @@ const SignIn = () => {
                 <p className="mt-5 mb-3 text-muted">&copy; 2017–2023</p>
             </form>
         </main>
+        </div>
     );
 }
 

@@ -1,0 +1,28 @@
+.activity-card {
+    margin-bottom: 20px;
+}
+
+.activity-icon {
+    font-size: 24px;
+}
+
+.today-activities .activity-icon {
+    color: blue;
+}
+
+.past-due-activities .activity-icon {
+    color: red;
+}
+
+.completed-activities .activity-icon {
+    color: green;
+}
+
+.activity-list {
+    list-style-type: none;
+    padding: 0;
+}
+
+.activity-list li {
+    padding: 5px 0;
+}

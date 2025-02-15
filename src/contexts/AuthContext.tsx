@@ -25,7 +25,6 @@ export interface IAuth {
   changePassword?: any
   getAttributes?: any
   setAttribute?: any
-  //addUserToGroup?:any
 }
 
 const defaultState: IAuth = {
@@ -94,7 +93,7 @@ const AuthProvider = ({ children }: Props) => {
         'Accept': 'application/json',
         'Access-Control-Allow-Origin': 'http://localhost:3000',
         'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, PUT, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Access-Control-Allow-Headers, Access-Control-Allow-Origin, Authorization, X-Requested-With',
+        'Access-Control-Allow-Headers': 'Origin, Content-Type, Access-Control-Allow-Headers, Access-Control-Allow-Origin, X-Requested-With',
         'Access-Control-Allow-Credentials': 'true',
       }
 
@@ -293,18 +292,6 @@ const AuthProvider = ({ children }: Props) => {
       throw err
     }
   }
-
-  // async function addUserToGroup(username: string, groupName: string) {
-  //   var params = {
-  //     GroupName: 'STRING_VALUE', /* required */
-  //     UserPoolId: 'STRING_VALUE', /* required */
-  //     Username: 'STRING_VALUE' /* required */
-  //   };
-  //   cognito.adminAddUserToGroup(params, function(err, data) {
-  //     if (err) console.log(err, err.stack); // an error occurred
-  //     else     console.log(data);           // successful response
-  //   });
-  // }
 
   const state: IAuth = {
     authStatus,

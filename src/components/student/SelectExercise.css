@@ -72,3 +72,22 @@
     font-size: 1.25rem;
     border-radius: 0.5rem;
   }
+
+
+
+
+
+
+
+  .list-group-item:hover {
+    background-color: #f8f9fa;
+    border-color: #ddd;
+  }
+  .btn-toggle.collapsed:hover {
+    background-color: #e9ecef;
+  }
+
+  .list-group-item.active {
+    background-color: #007bff;
+    color: white;
+  }

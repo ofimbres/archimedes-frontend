@@ -6,23 +6,26 @@ import './styles/index.css';
 import  { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import AuthProvider, { AuthIsSignedIn, AuthIsNotSignedIn } from './contexts/AuthContext'
+import StudentProvider from './contexts/StudentContext'
 
-import StudentHome from './routes/student/Home';
-import Landing from './routes/Landing';
+import StudentHome from './pages/student/Home';
+import Landing from './pages/Landing';
 
-import SignIn from './routes/auth/SignIn';
-import SendCode from './routes/auth/SendCode';
-import ForgotPassword from './routes/auth/ForgotPassword';
-import SignUp from './routes/auth/SignUp';
-import VerifyCode from './routes/auth/VerifyCode';
+import SignIn from './pages/auth/SignIn';
+import SendCode from './pages/auth/SendCode';
+import ForgotPassword from './pages/auth/ForgotPassword';
+import SignUp from './pages/auth/SignUp';
+import VerifyCode from './pages/auth/VerifyCode';
 
 import StudentNavigationBar from './components/student/NavigationBar';
+
+import EnrollPeriod from './components/student/EnrollPeriod';
 import StartExercise from './components/student/StartExercise';
 import SelectExercise from './components/student/SelectExercise';
 import ViewExerciseResults from './components/student/ViewExerciseResults';
 // import STAARRedesign from './components/student/STAARRedesign';
 
-import TeachertHome from './routes/teacher/Home';
+import TeachertHome from './pages/teacher/Home';
 
   const SignInRoute = () => (
     <BrowserRouter>
@@ -42,6 +45,7 @@ import TeachertHome from './routes/teacher/Home';
       <StudentNavigationBar />
       <Routes>
         <Route path="/" element={<StudentHome />} />
+        <Route path="/enroll-period" element={<EnrollPeriod />} />
         <Route path="/exercise/select" element={<SelectExercise />} />
         <Route path="/exercise/start" element={<StartExercise />} />
         <Route path="/exercise/completed" element={<ViewExerciseResults />} />
@@ -69,7 +73,9 @@ import TeachertHome from './routes/teacher/Home';
     <div className="App" >
       <AuthProvider>
         <AuthIsSignedIn role="students">
-          <StudentRoute />
+          <StudentProvider>
+            <StudentRoute />
+          </StudentProvider>
         </AuthIsSignedIn>
         <AuthIsSignedIn role="teachers">
           <TeacherRoute />
