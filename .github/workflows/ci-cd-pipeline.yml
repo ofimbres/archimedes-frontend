@@ -8,7 +8,6 @@ on:
 jobs:
   build:
     environment: dev
-    # runs-on: ubuntu-latest
     runs-on: ubuntu-24.04-arm
 
     steps:
@@ -25,6 +24,12 @@ jobs:
     - name: Login to Amazon ECR
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
+
+    - name: Create .env.production file
+      run: |
+        echo "REACT_APP_BACKEND_API_ENDPOINT=${{ vars.REACT_APP_BACKEND_API_ENDPOINT }}" >> .env.production
+        echo "REACT_APP_ENVIRONMENT=${{ vars.REACT_APP_ENVIRONMENT }}" >> .env.production
+        echo "REACT_APP_MINIQUIZ_ENDPOINT=${{ vars.REACT_APP_MINIQUIZ_ENDPOINT }}" >> .env.production
 
     - name: Build, tag, and push image to Amazon ECR
       id: build-image
