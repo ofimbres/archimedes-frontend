@@ -2,7 +2,7 @@ import React, { useState, useEffect, useContext } from 'react'
 
 import { jwtDecode } from "jwt-decode";
 
-import * as cognito from '../libs/cognito'
+// import * as cognito from '../libs/cognito'
 
 export enum AuthStatus {
   Loading,
@@ -24,7 +24,7 @@ export interface IAuth {
   forgotPassword?: any
   changePassword?: any
   getAttributes?: any
-  setAttribute?: any
+  //setAttribute?: any
 }
 
 const defaultState: IAuth = {
@@ -206,7 +206,7 @@ const AuthProvider = ({ children }: Props) => {
           }
         };
       }
-      return null
+      return null;
     } catch (err) {
       throw err
     }
@@ -238,14 +238,14 @@ const AuthProvider = ({ children }: Props) => {
     }
   }
 
-  async function setAttribute(attr: any) {
-    try {
-      const res = await cognito.setAttribute(attr)
-      return res
-    } catch (err) {
-      throw err
-    }
-  }
+  // async function setAttribute(attr: any) {
+  //   try {
+  //     const res = await cognito.setAttribute(attr)
+  //     return res
+  //   } catch (err) {
+  //     throw err
+  //   }
+  // }
 
   async function sendCode(username: string) {
     try {
@@ -287,7 +287,8 @@ const AuthProvider = ({ children }: Props) => {
 
   async function changePassword(oldPassword: string, newPassword: string) {
     try {
-      await cognito.changePassword(oldPassword, newPassword)
+      // await cognito.changePassword(oldPassword, newPassword)
+      // TODO
     } catch (err) {
       throw err
     }
@@ -306,7 +307,7 @@ const AuthProvider = ({ children }: Props) => {
     forgotPassword,
     changePassword,
     getAttributes,
-    setAttribute,
+    //setAttribute,
   }
 
   return <AuthContext.Provider value={state}>{children}</AuthContext.Provider>
