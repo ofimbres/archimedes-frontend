@@ -3,7 +3,7 @@
     "containerDefinitions": [
       {
         "name": "dev-archimedes-frontend-container",
-        "cpu": 256,
+        "cpu": 128,
         "memory": 256,
         "essential": true,
         "portMappings": [
