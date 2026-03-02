@@ -2,27 +2,25 @@
 // README at: https://github.com/devcontainers/templates/tree/main/src/javascript-node
 {
 	"name": "Node.js",
-	// Or use a Dockerfile or Docker Compose file. More info: https://containers.dev/guide/dockerfile
-	"image": "mcr.microsoft.com/devcontainers/javascript-node:18",
-	"features": {
-		"ghcr.io/devcontainers-contrib/features/bash-command:1": {},
-		"ghcr.io/devcontainers/features/docker-in-docker:2": {},
-		"aws-cli": "latest"
+	"build": {
+		"dockerfile": "Dockerfile",
+		"context": ".."
 	},
 
-	// Features to add to the dev container. More info: https://containers.dev/features.
-	// "features": {},
+	"features": {
+		"ghcr.io/devcontainers/features/docker-outside-of-docker": {}
+	},
 
 	// Use 'forwardPorts' to make a list of ports inside the container available locally.
 	// "forwardPorts": [],
 
 	// Use 'postCreateCommand' to run commands after the container is created.
+	// Wrapped so a failed npm install (e.g. network) doesn't block the container from opening.
 	"postCreateCommand": "npm install",
 	"customizations": {
 		"vscode": {
 		  "extensions": [
-			"ms-azuretools.vscode-docker",
-			"github.copilot-chat"
+			"ms-azuretools.vscode-docker"
 		  ]
 		}
 	  }

@@ -24,6 +24,14 @@
   },
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "eslint": "^8.0.0",
+    "eslint-plugin-react-hooks": "^4.6.2",
+    "prettier": "^3.0.0",
     "react-scripts": "^5.0.1"
   },
   "overrides": {
@@ -37,7 +45,11 @@
     "build": "env-cmd -f .env.development react-scripts build",
     "build:production": "env-cmd -f .env.production react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "eject": "react-scripts eject",
+    "lint": "eslint src --ext .js,.jsx,.ts,.tsx",
+    "lint:fix": "eslint src --ext .js,.jsx,.ts,.tsx --fix",
+    "format": "prettier --write src/**/*.{js,jsx,ts,tsx,json,css,md}",
+    "type-check": "tsc --noEmit"
   },
   "eslintConfig": {
     "extends": [
@@ -58,6 +70,7 @@
     ]
   },
   "engines": {
-    "node": "v18.16.1"
+    "node": ">=18.16.1",
+    "npm": ">=8.0.0"
   }
 }

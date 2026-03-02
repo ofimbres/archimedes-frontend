@@ -1,25 +1,25 @@
 import React, { useContext, useState, useEffect, useCallback } from 'react';
-import { AuthContext } from './AuthContext'
-import { getStudentPeriods} from '../libs/apiEndpoints';
+import { AuthContext } from './AuthContext';
+import { getStudentPeriods } from '../libs/apiEndpoints';
 
 export interface IPeriod {
-    availablePeriods?: any
-    setAvailablePeriods?: any
-    chosenPeriod?: any
-    setChosenPeriod?: any
-    refreshPeriods?: any
-  }
+  availablePeriods?: any;
+  setAvailablePeriods?: any;
+  chosenPeriod?: any;
+  setChosenPeriod?: any;
+  refreshPeriods?: any;
+}
 
 const defaultState: IPeriod = {
-    availablePeriods: [],
-    chosenPeriod: null
-}
+  availablePeriods: [],
+  chosenPeriod: null,
+};
 
 type Props = {
-    children?: React.ReactNode
-}
+  children?: React.ReactNode;
+};
 
-export const StudentContext = React.createContext(defaultState)
+export const StudentContext = React.createContext(defaultState);
 
 const StudentProvider = ({ children }: Props) => {
   const [chosenPeriod, setChosenPeriod] = useState(null);
@@ -39,14 +39,21 @@ const StudentProvider = ({ children }: Props) => {
   //   fetchClasses();
   // }, []);
 
+  const studentId =
+    authContext.sessionInfo?.user_type === 'students' && authContext.sessionInfo?.profile
+      ? (authContext.sessionInfo.profile as { id: string }).id
+      : null;
+
   const fetchClasses = useCallback(async () => {
+    if (!studentId || !authContext.sessionInfo?.accessToken) return;
     try {
-      const data = await getStudentPeriods(authContext.attrInfo['custom:userId'], authContext.sessionInfo?.accessToken); setAvailablePeriods(data);
+      const data = await getStudentPeriods(studentId, authContext.sessionInfo.accessToken);
+      setAvailablePeriods(data);
     } catch (error) {
       console.error('Error fetching classes:', error);
     }
-  }, [authContext]);
-  
+  }, [authContext.sessionInfo?.accessToken, studentId]);
+
   useEffect(() => {
     fetchClasses();
   }, [fetchClasses]);
@@ -56,10 +63,12 @@ const StudentProvider = ({ children }: Props) => {
   };
 
   return (
-    <StudentContext.Provider value={{ chosenPeriod, setChosenPeriod, availablePeriods, refreshPeriods }}>
+    <StudentContext.Provider
+      value={{ chosenPeriod, setChosenPeriod, availablePeriods, refreshPeriods }}
+    >
       {children}
     </StudentContext.Provider>
   );
 };
 
-export default StudentProvider
+export default StudentProvider;

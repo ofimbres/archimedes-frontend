@@ -1,135 +1,135 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react';
 
-import * as yup from 'yup'
+import * as yup from 'yup';
 
 export const useValidEmail = (initialValue: string) => {
-  const [email, setEmail] = useState(initialValue)
-  const [emailIsValid, setEmailIsValid] = useState(true)
+  const [email, setEmail] = useState(initialValue);
+  const [emailIsValid, setEmailIsValid] = useState(true);
 
   useEffect(() => {
     const emailSchema = yup.object().shape({
       email: yup.string().email().required(),
-    })
+    });
 
     if (email.length === 0) {
-      setEmailIsValid(true)
-      return
+      setEmailIsValid(true);
+      return;
     }
 
-    const isValid = emailSchema.isValidSync({ email })
+    const isValid = emailSchema.isValidSync({ email });
 
-    setEmailIsValid(isValid)
-  }, [email])
+    setEmailIsValid(isValid);
+  }, [email]);
 
-  return { email, setEmail, emailIsValid }
-}
+  return { email, setEmail, emailIsValid };
+};
 
 export const useValidPassword = (initialValue: string) => {
-  const [password, setPassword] = useState(initialValue)
-  const [passwordIsValid, setPasswordIsValid] = useState(true)
+  const [password, setPassword] = useState(initialValue);
+  const [passwordIsValid, setPasswordIsValid] = useState(true);
 
   useEffect(() => {
     const passwordSchema = yup.object().shape({
       password: yup.string().min(8).required(),
-    })
+    });
 
     if (password.length === 0) {
-      setPasswordIsValid(true)
-      return
+      setPasswordIsValid(true);
+      return;
     }
 
-    const isValid = passwordSchema.isValidSync({ password })
+    const isValid = passwordSchema.isValidSync({ password });
 
-    setPasswordIsValid(isValid)
-  }, [password])
+    setPasswordIsValid(isValid);
+  }, [password]);
 
-  return { password, setPassword, passwordIsValid }
-}
+  return { password, setPassword, passwordIsValid };
+};
 
 export const useValidUsername = (initialValue: string) => {
-  const [username, setUsername] = useState(initialValue)
-  const [usernameIsValid, setUsernameIsValid] = useState(true)
+  const [username, setUsername] = useState(initialValue);
+  const [usernameIsValid, setUsernameIsValid] = useState(true);
 
   useEffect(() => {
     const usernameSchema = yup.object().shape({
       username: yup.string().min(8).required(),
-    })
+    });
 
     if (username.length === 0) {
-      setUsernameIsValid(true)
-      return
+      setUsernameIsValid(true);
+      return;
     }
 
-    const isValid = usernameSchema.isValidSync({ username })
+    const isValid = usernameSchema.isValidSync({ username });
 
-    setUsernameIsValid(isValid)
-  }, [username])
+    setUsernameIsValid(isValid);
+  }, [username]);
 
-  return { username, setUsername, usernameIsValid }
-}
+  return { username, setUsername, usernameIsValid };
+};
 
 export const useValidCode = (initialValue: string) => {
-  const [code, setCode] = useState(initialValue)
-  const [codeIsValid, setCodeIsValid] = useState(true)
+  const [code, setCode] = useState(initialValue);
+  const [codeIsValid, setCodeIsValid] = useState(true);
 
   useEffect(() => {
     const codeSchema = yup.object().shape({
       code: yup.string().min(6).required(),
-    })
+    });
 
     if (code.length === 0) {
-      setCodeIsValid(true)
-      return
+      setCodeIsValid(true);
+      return;
     }
 
-    const isValid = codeSchema.isValidSync({ code })
+    const isValid = codeSchema.isValidSync({ code });
 
-    setCodeIsValid(isValid)
-  }, [code])
+    setCodeIsValid(isValid);
+  }, [code]);
 
-  return { code, setCode, codeIsValid }
-}
+  return { code, setCode, codeIsValid };
+};
 
 export const useValidGivenName = (initialValue: string) => {
-  const [givenName, setGivenName] = useState(initialValue)
-  const [givenNameIsValid, setGivenNameIsValid] = useState(true)
+  const [givenName, setGivenName] = useState(initialValue);
+  const [givenNameIsValid, setGivenNameIsValid] = useState(true);
 
   useEffect(() => {
     const givenNameSchema = yup.object().shape({
       givenName: yup.string().min(1).required(),
-    })
+    });
 
     if (givenName.length === 0) {
-      setGivenNameIsValid(true)
-      return
+      setGivenNameIsValid(true);
+      return;
     }
 
-    const isValid = givenNameSchema.isValidSync({ givenName })
+    const isValid = givenNameSchema.isValidSync({ givenName });
 
-    setGivenNameIsValid(isValid)
-  }, [givenName])
+    setGivenNameIsValid(isValid);
+  }, [givenName]);
 
-  return { givenName, setGivenName, givenNameIsValid }
-}
+  return { givenName, setGivenName, givenNameIsValid };
+};
 
 export const useValidFamilyName = (initialValue: string) => {
-  const [familyName, setFamilyName] = useState(initialValue)
-  const [familyNameIsValid, setFamilyNameIsValid] = useState(true)
+  const [familyName, setFamilyName] = useState(initialValue);
+  const [familyNameIsValid, setFamilyNameIsValid] = useState(true);
 
   useEffect(() => {
     const familyNameSchema = yup.object().shape({
       familyName: yup.string().min(1).required(),
-    })
+    });
 
     if (familyName.length === 0) {
-      setFamilyNameIsValid(true)
-      return
+      setFamilyNameIsValid(true);
+      return;
     }
 
-    const isValid = familyNameSchema.isValidSync({ familyName })
+    const isValid = familyNameSchema.isValidSync({ familyName });
 
-    setFamilyNameIsValid(isValid)
-  }, [familyName])
+    setFamilyNameIsValid(isValid);
+  }, [familyName]);
 
-  return { familyName, setFamilyName, familyNameIsValid }
-}
+  return { familyName, setFamilyName, familyNameIsValid };
+};

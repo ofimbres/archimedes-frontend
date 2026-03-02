@@ -1,297 +1,290 @@
-import React, { useState, useEffect, useContext } from 'react'
-
-import { jwtDecode } from "jwt-decode";
-
-// import * as cognito from '../libs/cognito'
+import React, { useState, useEffect, useContext, useCallback } from 'react';
+import type { UserType, Profile, MeResponse } from '../types/auth';
+import * as authApi from '../libs/authApi';
 
 export enum AuthStatus {
   Loading,
   SignedIn,
   SignedOut,
-  InProcess
+  NeedsProfile,
+  InProcess,
+}
+
+export interface SessionInfo {
+  username?: string;
+  email?: string;
+  sub?: string;
+  accessToken?: string;
+  refreshToken?: string;
+  user_type?: UserType;
+  profile?: Profile | null;
 }
 
 export interface IAuth {
-  sessionInfo?: { username?: string; email?: string; sub?: string; accessToken?: string; refreshToken?: string, groups?: string[] }
-  attrInfo?: any
-  authStatus?: AuthStatus
-  signInWithEmail?: any
-  signUpWithEmail?: any
-  signOut?: any
-  verifyCode?: any
-  getSession?: any
-  sendCode?: any
-  forgotPassword?: any
-  changePassword?: any
-  getAttributes?: any
-  //setAttribute?: any
+  sessionInfo?: SessionInfo;
+  attrInfo?: unknown[];
+  authStatus?: AuthStatus;
+  signInWithEmail?: (
+    username: string,
+    password: string
+  ) => Promise<{ needsProfile: boolean }>;
+  signUpWithEmail?: (
+    givenName: string,
+    familyName: string,
+    username: string,
+    email: string,
+    password: string
+  ) => Promise<void>;
+  signOut?: () => Promise<void>;
+  verifyCode?: (username: string, code: string) => Promise<string>;
+  getSession?: () => Promise<{ accessToken: { jwtToken: string }; refreshToken: { token: string } } | null>;
+  sendCode?: (username: string) => Promise<void>;
+  forgotPassword?: (username: string, code?: string, newPassword?: string) => Promise<string>;
+  changePassword?: (oldPassword: string, newPassword: string) => Promise<void>;
+  getAttributes?: () => Promise<unknown>;
+  completeProfile?: (
+    body: import('../types/auth').CompleteProfileBody
+  ) => Promise<void>;
+  setSessionFromTokens?: (accessToken: string, refreshToken?: string | null) => Promise<void>;
 }
 
 const defaultState: IAuth = {
   sessionInfo: {},
   authStatus: AuthStatus.Loading,
-}
+};
 
 type Props = {
-  children?: React.ReactNode,
-  role?: string
-}
+  children?: React.ReactNode;
+  role?: string;
+};
 
-export const AuthContext = React.createContext(defaultState)
+export const AuthContext = React.createContext(defaultState);
+
+function sessionHasRole(sessionInfo: SessionInfo | undefined, role: string): boolean {
+  const ut = sessionInfo?.user_type;
+  if (role === 'admin') return ut === 'admin';
+  if (role === 'students') return ut === 'students';
+  if (role === 'teachers') return ut === 'teachers';
+  return false;
+}
 
 export const AuthIsSignedIn = ({ children, role }: Props) => {
-  const { authStatus, sessionInfo }: IAuth = useContext(AuthContext)
+  const { authStatus, sessionInfo } = useContext(AuthContext);
 
-  return role
-   ? <>{authStatus === AuthStatus.SignedIn && sessionInfo?.groups?.includes(role) ? children : null}</>
-   : <>{authStatus === AuthStatus.SignedIn ? children : null}</>
-}
+  if (authStatus !== AuthStatus.SignedIn) return null;
+  if (role && !sessionHasRole(sessionInfo, role)) return null;
+  return <>{children}</>;
+};
 
 export const AuthIsNotSignedIn = ({ children }: Props) => {
-  const { authStatus }: IAuth = useContext(AuthContext)
+  const { authStatus } = useContext(AuthContext);
+  return <>{authStatus === AuthStatus.SignedOut ? children : null}</>;
+};
 
-  return <>{authStatus === AuthStatus.SignedOut ? children : null}</>
-}
+export const AuthNeedsProfile = ({ children }: Props) => {
+  const { authStatus } = useContext(AuthContext);
+  return <>{authStatus === AuthStatus.NeedsProfile ? children : null}</>;
+};
+
+const STORAGE_ACCESS = 'accessToken';
+const STORAGE_REFRESH = 'refreshToken';
+const STORAGE_USERNAME = 'lastUsername';
 
 const AuthProvider = ({ children }: Props) => {
-  const [authStatus, setAuthStatus] = useState(AuthStatus.Loading)
-  const [sessionInfo, setSessionInfo] = useState({})
-  const [attrInfo, setAttrInfo] = useState([])
+  const [authStatus, setAuthStatus] = useState(AuthStatus.Loading);
+  const [sessionInfo, setSessionInfo] = useState<SessionInfo>({});
+  const [attrInfo] = useState<unknown[]>([]);
+
+  const applyMe = useCallback((me: MeResponse, token: string, refresh?: string | null, username?: string) => {
+    const hasProfile = me.profile != null;
+    const isAdmin = me.user_type === 'admin';
+    if (hasProfile || isAdmin) {
+      setAuthStatus(AuthStatus.SignedIn);
+    } else {
+      setAuthStatus(AuthStatus.NeedsProfile);
+    }
+    setSessionInfo((prev) => ({
+      ...prev,
+      accessToken: token,
+      refreshToken: refresh ?? prev.refreshToken,
+      username: username ?? prev.username,
+      user_type: me.user_type,
+      profile: me.profile ?? null,
+    }));
+  }, []);
 
   useEffect(() => {
-    async function getSessionInfo() {
+    let cancelled = false;
+    const token = localStorage.getItem(STORAGE_ACCESS);
+    if (!token) {
+      setAuthStatus(AuthStatus.SignedOut);
+      return;
+    }
+    authApi
+      .getMe(token)
+      .then((me) => {
+        if (cancelled) return;
+        const refresh = localStorage.getItem(STORAGE_REFRESH);
+        const username = localStorage.getItem(STORAGE_USERNAME);
+        applyMe(me, token, refresh, username ?? undefined);
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        if (err?.message === 'UNAUTHORIZED') {
+          localStorage.removeItem(STORAGE_ACCESS);
+          localStorage.removeItem(STORAGE_REFRESH);
+          localStorage.removeItem(STORAGE_USERNAME);
+        }
+        setAuthStatus(AuthStatus.SignedOut);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [applyMe]);
+
+  async function setSessionFromTokens(accessToken: string, refreshToken?: string | null) {
+    localStorage.setItem(STORAGE_ACCESS, accessToken);
+    if (refreshToken != null) localStorage.setItem(STORAGE_REFRESH, refreshToken);
+    const me = await authApi.getMe(accessToken);
+    applyMe(me, accessToken, refreshToken);
+  }
+
+  async function signInWithEmail(
+    username: string,
+    password: string
+  ): Promise<{ needsProfile: boolean }> {
+    const data = await authApi.login(username, password);
+    if (!data.access_token) {
+      throw new Error('Invalid response from server. Please try again.');
+    }
+    localStorage.setItem(STORAGE_ACCESS, data.access_token);
+    if (data.refresh_token) localStorage.setItem(STORAGE_REFRESH, data.refresh_token);
+    if (data.user?.username) localStorage.setItem(STORAGE_USERNAME, data.user.username);
+    const me = await authApi.getMe(data.access_token);
+    applyMe(me, data.access_token, data.refresh_token ?? null, data.user?.username);
+    const needsProfile =
+      me.profile == null && me.user_type !== 'admin';
+    return { needsProfile };
+  }
+
+  async function signUpWithEmail(
+    givenName: string,
+    familyName: string,
+    username: string,
+    email: string,
+    password: string
+  ) {
+    const endpoint = process.env.REACT_APP_BACKEND_API_ENDPOINT;
+    const res = await fetch(`${endpoint}/api/v1/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({
+        username,
+        password,
+        email,
+        givenName,
+        familyName,
+      }),
+    });
+    const errorData = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(errorData.message || 'Registration failed. Please try again.');
+    }
+  }
+
+  async function signOut() {
+    const token = sessionInfo.accessToken ?? localStorage.getItem(STORAGE_ACCESS);
+    if (token) {
       try {
-        const session: any = await getSession()
-        setSessionInfo({
-          accessToken: session.accessToken.jwtToken,
-          refreshToken: session.refreshToken.token,
-          groups: session.accessToken.payload['cognito:groups'],
-          username: session.accessToken.payload['username'],
-        })
-        //window.localStorage.setItem('accessToken', `${session.accessToken.jwtToken}`)
-        //window.localStorage.setItem('refreshToken', `${session.refreshToken.token}`)
-        // await setAttribute({ Name: 'website', Value: 'https://github.com/dbroadhurst/aws-cognito-react' })
-        const attr: any = await getAttributes()
-        setAttrInfo(attr)
-        setAuthStatus(AuthStatus.SignedIn)
-      } catch (err) {
-        setAuthStatus(AuthStatus.SignedOut)
+        await authApi.logout(token);
+      } catch {
+        // ignore
       }
     }
-    getSessionInfo()
-  }, [setAuthStatus, authStatus])
-
-  if (authStatus === AuthStatus.Loading) {
-    return null
+    localStorage.removeItem(STORAGE_USERNAME);
+    localStorage.removeItem(STORAGE_ACCESS);
+    localStorage.removeItem(STORAGE_REFRESH);
+    setSessionInfo({});
+    setAuthStatus(AuthStatus.SignedOut);
   }
 
-  async function signInWithEmail(username: string, password: string) {
-    try {
-      const endpoint = process.env.REACT_APP_BACKEND_API_ENDPOINT;
-      let headers = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Access-Control-Allow-Origin': 'http://localhost:3000',
-        'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, PUT, OPTIONS',
-        'Access-Control-Allow-Headers': 'Origin, Content-Type, Access-Control-Allow-Headers, Access-Control-Allow-Origin, X-Requested-With',
-        'Access-Control-Allow-Credentials': 'true',
-      }
-
-      let body = {
-        username: username,
-        password: password
-      }
-      let response = await fetch(`${endpoint}/api/v1/auth/login`, {
-        method: 'POST',
-        headers: headers,
-        body: JSON.stringify(body)
-      })
-      let data = await response.json()
-      localStorage.setItem('lastUsername', data.user.username);
-      localStorage.setItem('accessToken', data.user.accessToken);
-      //await cognito.signInWithEmail(username, password)
-      setAuthStatus(AuthStatus.InProcess)
-    } catch (err) {
-      setAuthStatus(AuthStatus.SignedOut)
-      throw err
-    }
+  async function completeProfile(body: import('../types/auth').CompleteProfileBody) {
+    const token = sessionInfo.accessToken ?? localStorage.getItem(STORAGE_ACCESS);
+    if (!token) throw new Error('Not authenticated');
+    const me = await authApi.completeProfile(token, body);
+    const refresh = sessionInfo.refreshToken ?? localStorage.getItem(STORAGE_REFRESH);
+    applyMe(me, token, refresh, sessionInfo.username);
   }
 
-  async function signUpWithEmail(givenName: string, familyName: string, username: string, email: string, password: string, userType: string) {
-    try {
-      //await cognito.signUpUserWithEmail(givenName, familyName, username, email, password)
-      const endpoint = process.env.REACT_APP_BACKEND_API_ENDPOINT;
-      let headers = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Access-Control-Allow-Origin': 'http://localhost:3000',
-        'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, PUT, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Access-Control-Allow-Headers, Access-Control-Allow-Origin, Authorization, X-Requested-With',
-        'Access-Control-Allow-Credentials': 'true',
-      }
-
-      let body = {
-        username: username,
-        password: password,
-        email: email,
-        givenName: givenName,
-        familyName: familyName,
-        userType: userType
-      }
-      let response = await fetch(`${endpoint}/api/v1/auth/register`, {
-        method: 'POST',
-        headers: headers,
-        body: JSON.stringify(body)
-      })
-      let data = await response.text()
-    } catch (err) {
-      throw err
-    }
-  }
-
-  function signOut() {
-    // cognito.signOut()
-    localStorage.removeItem('lastUsername');
-    localStorage.removeItem('accessToken');
-    setAuthStatus(AuthStatus.SignedOut)
-  }
-
-  // TODO
   async function verifyCode(username: string, code: string) {
-    try {
-      //await cognito.verifyCode(username, code)
-      //const username = localStorage.getItem('lastUsername');
-      const endpoint = process.env.REACT_APP_BACKEND_API_ENDPOINT;
-      let body = {
-        username: username,
-        confirmationCode: code
-      }
-      let headers = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Access-Control-Allow-Origin': 'http://localhost:3000',
-        'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, PUT, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Access-Control-Allow-Headers, Access-Control-Allow-Origin, Authorization, X-Requested-With',
-        'Access-Control-Allow-Credentials': 'true',
-      }
-
-      let response = await fetch(`${endpoint}/api/v1/auth/verify-code`, {
-        method: 'POST',
-        headers: headers,
-        body: JSON.stringify(body)
-      })
-      let data = await response.text();
-      return data;
-    } catch (err) {
-      throw err
+    const endpoint = process.env.REACT_APP_BACKEND_API_ENDPOINT;
+    const res = await fetch(`${endpoint}/api/v1/auth/verify-code`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ username, confirmationCode: code }),
+    });
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Verification failed. Please check your code.');
     }
+    return res.text();
   }
 
   async function getSession() {
+    const accessToken = localStorage.getItem(STORAGE_ACCESS);
+    if (!accessToken) return null;
     try {
-      //const session = await cognito.getSession()
-      //return session;
-      const accessToken = localStorage.getItem("accessToken");
-
-      if (accessToken != null) {
-        const payload = jwtDecode(accessToken);
-
-        return {
-          accessToken: {
-            jwtToken: accessToken,
-            payload: payload
-          },
-          refreshToken: {
-            token: 'refreshToken'
-          }
-        };
-      }
+      const { jwtDecode } = await import('jwt-decode');
+      const payload = jwtDecode(accessToken) as Record<string, unknown>;
+      return {
+        accessToken: { jwtToken: accessToken, payload },
+        refreshToken: { token: localStorage.getItem(STORAGE_REFRESH) ?? '' },
+      };
+    } catch {
       return null;
-    } catch (err) {
-      throw err
     }
   }
 
   async function getAttributes() {
-    try {
-      //const attr = await cognito.getAttributes()
-      //return attr
-      const username = localStorage.getItem('lastUsername');
-      const endpoint = process.env.REACT_APP_BACKEND_API_ENDPOINT;
-      let headers = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Access-Control-Allow-Origin': 'http://localhost:3000',
-        'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, PUT, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Access-Control-Allow-Headers, Access-Control-Allow-Origin, Authorization, X-Requested-With',
-        'Access-Control-Allow-Credentials': 'true',
-      }
-
-      let response = await fetch(`${endpoint}/api/v1/auth/${username}/attributes`, {
-        method: 'GET',
-        headers: headers
-      })
-      let data = await response.json();
-      return data;
-    } catch (err) {
-      throw err
-    }
+    const username = localStorage.getItem(STORAGE_USERNAME);
+    const endpoint = process.env.REACT_APP_BACKEND_API_ENDPOINT;
+    if (!username || !endpoint) return [];
+    const res = await fetch(`${endpoint}/api/v1/auth/${username}/attributes`, {
+      headers: { Accept: 'application/json' },
+    });
+    const data = await res.json().catch(() => []);
+    return data;
   }
 
-  // async function setAttribute(attr: any) {
-  //   try {
-  //     const res = await cognito.setAttribute(attr)
-  //     return res
-  //   } catch (err) {
-  //     throw err
-  //   }
-  // }
-
-  async function sendCode(username: string) {
-    try {
-      //await cognito.sendCode(username)
-    } catch (err) {
-      throw err
-    }
+  async function sendCode(_username: string) {
+    // TODO if backend supports
   }
 
-  async function forgotPassword(username: string) {
-    try {
-      //await cognito.forgotPassword(username, code, password)
-      //await cognito.verifyCode(username, code)
-      //const username = localStorage.getItem('lastUsername');
-      const endpoint = process.env.REACT_APP_BACKEND_API_ENDPOINT;
-      let body = {
-        username: username
-      }
-      let headers = {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-        'Access-Control-Allow-Origin': 'http://localhost:3000',
-        'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, PUT, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Access-Control-Allow-Headers, Access-Control-Allow-Origin, Authorization, X-Requested-With',
-        'Access-Control-Allow-Credentials': 'true',
-      }
-
-      let response = await fetch(`${endpoint}/api/v1/auth/forgot-password`, {
-        method: 'POST',
-        headers: headers,
-        body: JSON.stringify(body)
-      })
-      let data = await response.text();
-      return data;
-    } catch (err) {
-      throw err
+  async function forgotPassword(
+    username: string,
+    _code?: string,
+    _newPassword?: string
+  ): Promise<string> {
+    const endpoint = process.env.REACT_APP_BACKEND_API_ENDPOINT;
+    const res = await fetch(`${endpoint}/api/v1/auth/forgot-password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify({ username }),
+    });
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Request failed');
     }
+    return res.text();
   }
 
-  async function changePassword(oldPassword: string, newPassword: string) {
-    try {
-      // await cognito.changePassword(oldPassword, newPassword)
-      // TODO
-    } catch (err) {
-      throw err
-    }
+  async function changePassword(_oldPassword: string, _newPassword: string) {
+    // TODO when backend supports
+    throw new Error('Not implemented');
+  }
+
+  if (authStatus === AuthStatus.Loading) {
+    return null;
   }
 
   const state: IAuth = {
@@ -307,10 +300,11 @@ const AuthProvider = ({ children }: Props) => {
     forgotPassword,
     changePassword,
     getAttributes,
-    //setAttribute,
-  }
+    completeProfile,
+    setSessionFromTokens,
+  };
 
-  return <AuthContext.Provider value={state}>{children}</AuthContext.Provider>
-}
+  return <AuthContext.Provider value={state}>{children}</AuthContext.Provider>;
+};
 
-export default AuthProvider
+export default AuthProvider;

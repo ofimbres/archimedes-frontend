@@ -1,0 +1,211 @@
+/* Kid-Friendly Color Palette and Global Styles */
+
+:root {
+  /* Primary Colors - Bright and Engaging */
+  --primary-blue: #4A90E2;
+  --primary-green: #7ED321;
+  --primary-orange: #FF6B35;
+  --primary-purple: #9013FE;
+  --primary-pink: #E91E63;
+  
+  /* Secondary Colors */
+  --secondary-light-blue: #E3F2FD;
+  --secondary-light-green: #F1F8E9;
+  --secondary-light-orange: #FFF3E0;
+  --secondary-light-purple: #F3E5F5;
+  
+  /* Neutral Colors */
+  --white: #FFFFFF;
+  --light-gray: #F8F9FA;
+  --medium-gray: #6C757D;
+  --dark-gray: #343A40;
+  
+  /* Gradient Backgrounds */
+  --gradient-primary: linear-gradient(135deg, #4A90E2 0%, #7ED321 100%);
+  --gradient-secondary: linear-gradient(135deg, #FF6B35 0%, #E91E63 100%);
+  --gradient-soft: linear-gradient(135deg, #E3F2FD 0%, #F1F8E9 100%);
+  
+  /* Shadows */
+  --shadow-soft: 0 4px 12px rgba(74, 144, 226, 0.15);
+  --shadow-hover: 0 8px 24px rgba(74, 144, 226, 0.25);
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Global Typography */
+body {
+  font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+  color: var(--dark-gray);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  letter-spacing: -0.025em;
+}
+
+/* Kid-Friendly Button Styles */
+.btn-kid-primary {
+  background: var(--gradient-primary);
+  border: none;
+  border-radius: 25px;
+  padding: 12px 24px;
+  font-weight: 600;
+  text-transform: none;
+  box-shadow: var(--shadow-soft);
+  transition: all 0.3s ease;
+  color: white;
+}
+
+.btn-kid-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+  color: white;
+}
+
+.btn-kid-secondary {
+  background: var(--gradient-secondary);
+  border: none;
+  border-radius: 25px;
+  padding: 12px 24px;
+  font-weight: 600;
+  text-transform: none;
+  box-shadow: var(--shadow-soft);
+  transition: all 0.3s ease;
+  color: white;
+}
+
+.btn-kid-secondary:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-hover);
+  color: white;
+}
+
+.btn-kid-outline {
+  background: transparent;
+  border: 2px solid var(--primary-blue);
+  border-radius: 25px;
+  padding: 10px 24px;
+  font-weight: 600;
+  color: var(--primary-blue);
+  transition: all 0.3s ease;
+}
+
+.btn-kid-outline:hover {
+  background: var(--primary-blue);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-soft);
+}
+
+/* Card Styles */
+.card-kid {
+  border: none;
+  border-radius: 20px;
+  box-shadow: var(--shadow-card);
+  transition: all 0.3s ease;
+  overflow: hidden;
+}
+
+.card-kid:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-hover);
+}
+
+.card-kid-header {
+  background: var(--gradient-soft);
+  border-bottom: none;
+  padding: 20px;
+}
+
+/* Background Patterns */
+.bg-kid-gradient {
+  background: var(--gradient-soft);
+}
+
+.bg-kid-primary {
+  background: var(--gradient-primary);
+}
+
+.bg-kid-dots {
+  background-image: radial-gradient(circle, var(--primary-blue) 1px, transparent 1px);
+  background-size: 20px 20px;
+  background-color: var(--secondary-light-blue);
+}
+
+/* Text Colors */
+.text-kid-primary {
+  color: var(--primary-blue);
+}
+
+.text-kid-green {
+  color: var(--primary-green);
+}
+
+.text-kid-orange {
+  color: var(--primary-orange);
+}
+
+.text-kid-purple {
+  color: var(--primary-purple);
+}
+
+/* Fun Animations */
+@keyframes bounce-gentle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-10px); }
+}
+
+.bounce-gentle {
+  animation: bounce-gentle 2s ease-in-out infinite;
+}
+
+@keyframes pulse-gentle {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.05); }
+}
+
+.pulse-gentle {
+  animation: pulse-gentle 3s ease-in-out infinite;
+}
+
+/* Rounded Elements */
+.rounded-kid {
+  border-radius: 20px;
+}
+
+.rounded-kid-lg {
+  border-radius: 30px;
+}
+
+/* Logo Styling */
+.logo-kid {
+  border-radius: 50%;
+  box-shadow: var(--shadow-soft);
+  transition: all 0.3s ease;
+}
+
+.logo-kid:hover {
+  transform: scale(1.1);
+  box-shadow: var(--shadow-hover);
+}
+
+/* Container Styling */
+.container-kid {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .btn-kid-primary,
+  .btn-kid-secondary,
+  .btn-kid-outline {
+    padding: 10px 20px;
+    font-size: 14px;
+  }
+  
+  .card-kid {
+    margin-bottom: 20px;
+  }
+}
