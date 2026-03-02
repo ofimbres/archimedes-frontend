@@ -39,14 +39,8 @@ const Landing: React.FC = () => {
             
             {/* Action Buttons */}
             <div className="landing-buttons d-flex justify-content-center flex-wrap gap-2">
-              <a
-                href={getOAuthRedirectUrl()}
-                className="landing-btn-signin"
-              >
-                Sign in with Google
-              </a>
               <Link to="/signin" className="landing-btn-signin">
-                🔐 Sign In (email)
+                🔐 Sign In
               </Link>
               <Link to="/signup" className="landing-btn-signup">
                 ✨ Start Learning
