@@ -1,5 +1,4 @@
 import React, { Component, ErrorInfo, ReactNode } from 'react';
-import { Container, Row, Col, Card } from 'react-bootstrap';
 
 interface Props {
   children: ReactNode;
@@ -11,10 +10,6 @@ interface State {
   error?: Error;
 }
 
-/**
- * Error Boundary component to catch and handle React errors gracefully
- * Provides a fallback UI with Bootstrap styling when errors occur
- */
 class ErrorBoundary extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
@@ -22,53 +17,41 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   static getDerivedStateFromError(error: Error): State {
-    // Update state so the next render will show the fallback UI
     return { hasError: true, error };
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    // Log error to console or external service
     console.error('ErrorBoundary caught an error:', error, errorInfo);
   }
 
   render() {
     if (this.state.hasError) {
-      // Custom fallback UI or default error message
-      if (this.props.fallback) {
-        return this.props.fallback;
-      }
+      if (this.props.fallback) return this.props.fallback;
 
       return (
-        <Container className="mt-5">
-          <Row className="justify-content-center">
-            <Col md={8}>
-              <Card className="border-danger">
-                <Card.Header className="bg-danger text-white">
-                  <h4 className="mb-0">Oops! Something went wrong</h4>
-                </Card.Header>
-                <Card.Body>
-                  <p className="mb-3">
-                    We're sorry, but something unexpected happened. Please try refreshing the page.
-                  </p>
-                  <button className="btn btn-primary" onClick={() => window.location.reload()}>
-                    Refresh Page
-                  </button>
-                  {process.env.NODE_ENV === 'development' && this.state.error && (
-                    <details className="mt-3">
-                      <summary className="text-muted">Error Details (Development Only)</summary>
-                      <pre className="mt-2 p-2 bg-light border rounded">
-                        {this.state.error.toString()}
-                      </pre>
-                    </details>
-                  )}
-                </Card.Body>
-              </Card>
-            </Col>
-          </Row>
-        </Container>
+        <div className="min-h-screen flex items-center justify-center p-4 bg-base-200">
+          <div className="card w-full max-w-lg bg-base-100 border-2 border-error shadow-xl">
+            <div className="card-body">
+              <h2 className="card-title text-error">Oops! Something went wrong</h2>
+              <p className="text-base-content">
+                We&apos;re sorry, but something unexpected happened. Please try refreshing the page.
+              </p>
+              <button type="button" className="btn btn-primary rounded-bubble" onClick={() => window.location.reload()}>
+                Refresh Page
+              </button>
+              {process.env.NODE_ENV === 'development' && this.state.error && (
+                <details className="mt-4">
+                  <summary className="cursor-pointer text-base-content/70">Error Details (Development Only)</summary>
+                  <pre className="mt-2 p-4 bg-base-200 rounded-lg text-sm overflow-auto">
+                    {this.state.error.toString()}
+                  </pre>
+                </details>
+              )}
+            </div>
+          </div>
+        </div>
       );
     }
-
     return this.props.children;
   }
 }

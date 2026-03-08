@@ -12,6 +12,7 @@
     "amazon-cognito-identity-js": "^6.3.6",
     "bootstrap": "^5.3.1",
     "bootstrap-icons": "^1.10.5",
+    "daisyui": "^4.12.24",
     "env-cmd": "^10.1.0",
     "jwt-decode": "^4.0.0",
     "react": "^18.2.0",
@@ -24,15 +25,19 @@
   },
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
+    "@craco/craco": "^7.1.0",
     "@types/node": "^20.0.0",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
     "@typescript-eslint/eslint-plugin": "^6.21.0",
     "@typescript-eslint/parser": "^6.21.0",
+    "autoprefixer": "^10.4.27",
     "eslint": "^8.0.0",
     "eslint-plugin-react-hooks": "^4.6.2",
+    "postcss": "^8.5.8",
     "prettier": "^3.0.0",
-    "react-scripts": "^5.0.1"
+    "react-scripts": "^5.0.1",
+    "tailwindcss": "^3.4.19"
   },
   "overrides": {
     "react-scripts": {
@@ -40,11 +45,11 @@
     }
   },
   "scripts": {
-    "start": "env-cmd -f .env.development react-scripts start",
-    "start:production": "env-cmd -f .env.production react-scripts start",
-    "build": "env-cmd -f .env.development react-scripts build",
-    "build:production": "env-cmd -f .env.production react-scripts build",
-    "test": "react-scripts test",
+    "start": "env-cmd -f .env.development craco start",
+    "start:production": "env-cmd -f .env.production craco start",
+    "build": "env-cmd -f .env.development craco build",
+    "build:production": "env-cmd -f .env.production craco build",
+    "test": "craco test",
     "eject": "react-scripts eject",
     "lint": "eslint src --ext .js,.jsx,.ts,.tsx",
     "lint:fix": "eslint src --ext .js,.jsx,.ts,.tsx --fix",

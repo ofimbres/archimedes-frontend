@@ -1,123 +1,95 @@
 import React from 'react';
-import { Form } from 'react-bootstrap';
+
+const inputClass = 'input input-bordered rounded-bubble border-2 border-water-foam w-full focus:border-water-mid focus:outline-none';
+const inputInvalidClass = 'input input-bordered input-error rounded-bubble border-2 w-full';
 
 export const Email: React.FunctionComponent<{
   emailIsValid: boolean;
   setEmail: (_: string) => void;
-}> = ({ emailIsValid, setEmail }) => {
-  return (
-    <div className="form-floating">
-      <Form.Control
-        id="floatingInput"
-        type="email"
-        isInvalid={!emailIsValid}
-        placeholder={emailIsValid ? 'Email' : 'Invalid Email'}
-        onChange={evt => {
-          setEmail(evt.target.value);
-        }}
-      />
-      <label htmlFor="floatingInput">Email</label>
-    </div>
-  );
-};
+}> = ({ emailIsValid, setEmail }) => (
+  <div className="form-control">
+    <label className="label"><span className="label-text">Email</span></label>
+    <input
+      type="email"
+      placeholder={emailIsValid ? 'Email' : 'Invalid Email'}
+      onChange={(e) => setEmail(e.target.value)}
+      className={!emailIsValid ? inputInvalidClass : inputClass}
+    />
+  </div>
+);
 
 export const Password: React.FunctionComponent<{
   label: string;
   passwordIsValid: boolean;
   setPassword: (_: string) => void;
-}> = ({ label, passwordIsValid, setPassword }) => {
-  return (
-    <div className="form-floating">
-      <Form.Control
-        id="floatingInput"
-        type="password"
-        isInvalid={!passwordIsValid}
-        placeholder={passwordIsValid ? label : 'Minimum 8 characters'}
-        onChange={evt => {
-          setPassword(evt.target.value);
-        }}
-      />
-      <label htmlFor="floatingInput">{label}</label>
-    </div>
-  );
-};
+}> = ({ label, passwordIsValid, setPassword }) => (
+  <div className="form-control">
+    <label className="label"><span className="label-text">{label}</span></label>
+    <input
+      type="password"
+      placeholder={passwordIsValid ? label : 'Minimum 8 characters'}
+      onChange={(e) => setPassword(e.target.value)}
+      className={!passwordIsValid ? inputInvalidClass : inputClass}
+    />
+  </div>
+);
 
 export const Username: React.FunctionComponent<{
   usernameIsValid: boolean;
   setUsername: (_: string) => void;
-}> = ({ usernameIsValid, setUsername }) => {
-  return (
-    <div className="form-floating">
-      <Form.Control
-        id="floatingInput"
-        type="text"
-        isInvalid={!usernameIsValid}
-        placeholder={usernameIsValid ? 'Username' : 'Minimum 8 characters'}
-        onChange={evt => {
-          setUsername(evt.target.value);
-        }}
-      />
-      <label htmlFor="floatingInput">Username</label>
-    </div>
-  );
-};
+}> = ({ usernameIsValid, setUsername }) => (
+  <div className="form-control">
+    <label className="label"><span className="label-text">Username</span></label>
+    <input
+      type="text"
+      placeholder={usernameIsValid ? 'Username' : 'Minimum 3 characters'}
+      onChange={(e) => setUsername(e.target.value)}
+      className={!usernameIsValid ? inputInvalidClass : inputClass}
+    />
+  </div>
+);
 
 export const Code: React.FunctionComponent<{
   codeIsValid: boolean;
   setCode: (_: string) => void;
-}> = ({ codeIsValid, setCode }) => {
-  return (
-    <div className="form-floating">
-      <Form.Control
-        id="floatingInput"
-        type="text"
-        isInvalid={!codeIsValid}
-        placeholder={codeIsValid ? 'Code' : 'Minimum 6 characters'}
-        onChange={evt => {
-          setCode(evt.target.value);
-        }}
-      />
-      <label htmlFor="floatingInput">Code</label>
-    </div>
-  );
-};
+}> = ({ codeIsValid, setCode }) => (
+  <div className="form-control">
+    <label className="label"><span className="label-text">Code</span></label>
+    <input
+      type="text"
+      placeholder={codeIsValid ? 'Code' : 'Minimum 6 characters'}
+      onChange={(e) => setCode(e.target.value)}
+      className={!codeIsValid ? inputInvalidClass : inputClass}
+    />
+  </div>
+);
 
 export const GivenName: React.FunctionComponent<{
   givenNameIsValid: boolean;
   setGivenName: (_: string) => void;
-}> = ({ givenNameIsValid, setGivenName }) => {
-  return (
-    <div className="form-floating">
-      <Form.Control
-        id="floatingInput"
-        type="text"
-        isInvalid={!givenNameIsValid}
-        placeholder={givenNameIsValid ? 'Given Name' : 'Minimum 1 character'}
-        onChange={evt => {
-          setGivenName(evt.target.value);
-        }}
-      />
-      <label htmlFor="floatingInput">Given Name</label>
-    </div>
-  );
-};
+}> = ({ givenNameIsValid, setGivenName }) => (
+  <div className="form-control">
+    <label className="label"><span className="label-text">Given Name</span></label>
+    <input
+      type="text"
+      placeholder={givenNameIsValid ? 'Given Name' : 'Min 1 character'}
+      onChange={(e) => setGivenName(e.target.value)}
+      className={!givenNameIsValid ? inputInvalidClass : inputClass}
+    />
+  </div>
+);
 
 export const FamilyName: React.FunctionComponent<{
   familyNameIsValid: boolean;
   setFamilyName: (_: string) => void;
-}> = ({ familyNameIsValid, setFamilyName }) => {
-  return (
-    <div className="form-floating">
-      <Form.Control
-        id="floatingInput"
-        type="text"
-        isInvalid={!familyNameIsValid}
-        placeholder={familyNameIsValid ? 'Family Name' : 'Minimum 1 character'}
-        onChange={evt => {
-          setFamilyName(evt.target.value);
-        }}
-      />
-      <label htmlFor="floatingInput">Family Name</label>
-    </div>
-  );
-};
+}> = ({ familyNameIsValid, setFamilyName }) => (
+  <div className="form-control">
+    <label className="label"><span className="label-text">Family Name</span></label>
+    <input
+      type="text"
+      placeholder={familyNameIsValid ? 'Family Name' : 'Min 1 character'}
+      onChange={(e) => setFamilyName(e.target.value)}
+      className={!familyNameIsValid ? inputInvalidClass : inputClass}
+    />
+  </div>
+);

@@ -2,10 +2,6 @@ import React, { useEffect, useState, useRef, useContext, useCallback } from 'rea
 import { Link } from 'react-router-dom';
 import { AuthContext } from '../../contexts/AuthContext';
 
-import './ExerciseBrowser.css';
-import 'bootstrap-icons/font/bootstrap-icons.css';
-
-// Type definitions
 interface Subtopic {
   id: string;
   name: string;
@@ -24,57 +20,52 @@ interface Exercise {
   classification: string;
 }
 
-/**
- * ExerciseBrowser component for displaying and selecting available exercises
- * Organized by topics and subtopics with Bootstrap styling
- */
 const ExerciseBrowser: React.FC = () => {
   const authContext = useContext(AuthContext);
   const endpoint = process.env.REACT_APP_BACKEND_API_ENDPOINT;
-
   const [topicList, setTopicList] = useState<Topic[]>([]);
   const [exerciseList, setExerciseList] = useState<Exercise[]>([]);
+  const [openTopicId, setOpenTopicId] = useState<string | null>(null);
   const hasFetchedData = useRef<boolean>(false);
 
   const createHeaders = (accessToken: string): Headers => {
     const headers = new Headers();
     headers.append('Content-Type', 'application/json');
     headers.append('Accept', 'application/json');
-    headers.append('Access-Control-Allow-Origin', 'http://localhost:3000');
-    headers.append('Access-Control-Allow-Methods', 'GET, POST, PATCH, DELETE, PUT, OPTIONS');
-    headers.append(
-      'Access-Control-Allow-Headers',
-      'Content-Type, Access-Control-Allow-Headers, Access-Control-Allow-Origin, Authorization, X-Requested-With'
-    );
-    headers.append('Access-Control-Allow-Credentials', 'true');
     headers.append('Authorization', `Bearer ${accessToken}`);
     return headers;
   };
 
+  const getExerciseList = useCallback(async (topicId: string, subtopicId: string): Promise<void> => {
+    try {
+      if (!authContext.sessionInfo?.accessToken || !endpoint) return;
+      const headers = createHeaders(authContext.sessionInfo.accessToken);
+      const response = await fetch(
+        `${endpoint}/api/v1/topics/${topicId}/subtopics/${subtopicId}/activities`,
+        { headers }
+      );
+      const data: Exercise[] = await response.json();
+      setExerciseList(data);
+    } catch (error) {
+      console.error('Error fetching exercises:', error);
+    }
+  }, [authContext.sessionInfo?.accessToken, endpoint]);
+
   const getTopicsAndSubtopics = useCallback(async (): Promise<void> => {
     try {
-      if (!authContext.sessionInfo?.accessToken || !endpoint) {
-        console.error('Missing access token or endpoint');
-        return;
-      }
-
+      if (!authContext.sessionInfo?.accessToken || !endpoint) return;
       const headers = createHeaders(authContext.sessionInfo.accessToken);
-      const requestOptions = { headers };
-
-      const response = await fetch(`${endpoint}/api/v1/topics/`, requestOptions);
+      const response = await fetch(`${endpoint}/api/v1/topics/`, { headers });
       const data: Topic[] = await response.json();
-
       setTopicList(data);
-
-      // Auto-select first topic and subtopic if available
       if (data.length > 0 && data[0].descendants.length > 0) {
+        setOpenTopicId(data[0].id);
         await getExerciseList(data[0].id, data[0].descendants[0].id);
       }
     } catch (error) {
       console.error('Error fetching topics:', error);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [authContext.sessionInfo?.accessToken, endpoint]); // getExerciseList causes circular dependency
+  }, [authContext.sessionInfo?.accessToken, endpoint, getExerciseList]);
 
   useEffect(() => {
     if (!hasFetchedData.current) {
@@ -83,155 +74,116 @@ const ExerciseBrowser: React.FC = () => {
     }
   }, [getTopicsAndSubtopics]);
 
-  const getExerciseList = async (topicId: string, subtopicId: string): Promise<void> => {
-    try {
-      if (!authContext.sessionInfo?.accessToken || !endpoint) {
-        console.error('Missing access token or endpoint');
-        return;
-      }
-
-      const headers = createHeaders(authContext.sessionInfo.accessToken);
-      const requestOptions = { headers };
-
-      const response = await fetch(
-        `${endpoint}/api/v1/topics/${topicId}/subtopics/${subtopicId}/activities`,
-        requestOptions
-      );
-      const data: Exercise[] = await response.json();
-
-      setExerciseList(data);
-    } catch (error) {
-      console.error('Error fetching exercises:', error);
-    }
-  };
-
   return (
-    <div className="exercise-select-page">
-      <div className="container">
-        <h1 className="text-center mb-4">
-          <i className="bi bi-bookmarks me-3"></i>
-          Select Exercise
+    <div className="min-h-screen bg-base-200 py-8 px-4">
+      <div className="container max-w-6xl mx-auto">
+        <h1 className="font-display font-bold text-2xl text-water-deep text-center mb-8">
+          Select exercise
         </h1>
 
-        <div className="row g-4">
-          {/* Topics Navigation Sidebar */}
-          <div className="col-lg-4 col-md-5 col-12">
-            <div className="topics-sidebar p-4">
-              <div className="d-flex align-items-center mb-3">
-                <i className="bi bi-list-ul me-2 text-primary"></i>
-                <h4 className="mb-0 text-dark">Topics</h4>
-              </div>
-              
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+          {/* Topics sidebar */}
+          <div className="lg:col-span-4">
+            <div className="bg-base-100 rounded-blob border-2 border-water-foam/50 shadow-bubble p-4 max-h-[70vh] overflow-y-auto">
+              <h2 className="font-display font-semibold text-water-deep mb-3 flex items-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h7" /></svg>
+                Topics
+              </h2>
               {topicList.length > 0 ? (
-                <ul className="list-unstyled">
-                  {topicList.map(topic => (
-                    <li key={topic.id} className="mb-2">
+                <ul className="space-y-1">
+                  {topicList.map((topic) => (
+                    <li key={topic.id}>
                       <button
-                        className="btn btn-toggle d-flex align-items-center w-100 text-start collapsed"
-                        data-bs-toggle="collapse"
-                        data-bs-target={`#${topic.id}-collapse`}
-                        aria-expanded="false"
                         type="button"
+                        className={`btn btn-ghost w-full justify-start rounded-bubble ${openTopicId === topic.id ? 'btn-active' : ''}`}
+                        onClick={() => {
+                          setOpenTopicId((prev) => (prev === topic.id ? null : topic.id));
+                          if (topic.descendants[0]) {
+                            getExerciseList(topic.id, topic.descendants[0].id);
+                          }
+                        }}
                       >
                         {topic.name}
                       </button>
-                      <div className="collapse" id={`${topic.id}-collapse`}>
-                        <ul className="list-unstyled btn-toggle-nav">
-                          {topic.descendants.map(subtopic => (
+                      {openTopicId === topic.id && (
+                        <ul className="ml-4 mt-1 space-y-1">
+                          {topic.descendants.map((subtopic) => (
                             <li key={subtopic.id}>
                               <button
                                 type="button"
-                                className="btn btn-link subtopic-link text-start"
+                                className="btn btn-ghost btn-sm w-full justify-start text-base-content/80 rounded-bubble"
                                 onClick={() => getExerciseList(topic.id, subtopic.id)}
                               >
-                                <i className="bi bi-arrow-return-right me-2"></i>
+                                <span className="mr-2">→</span>
                                 {subtopic.name}
                               </button>
                             </li>
                           ))}
                         </ul>
-                      </div>
+                      )}
                     </li>
                   ))}
                 </ul>
               ) : (
-                <div className="text-center py-4">
-                  <div className="spinner-border text-primary" role="status">
-                    <span className="visually-hidden">Loading...</span>
-                  </div>
-                  <p className="mt-2 text-muted">Loading topics...</p>
+                <div className="flex flex-col items-center justify-center py-8">
+                  <span className="loading loading-spinner loading-md text-primary" />
+                  <p className="mt-2 text-base-content/70">Loading topics…</p>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Exercise Selection Main Area */}
-          <div className="col-lg-8 col-md-7 col-12">
-            <div className="exercises-main p-4">
-              <div className="d-flex align-items-center justify-content-between mb-4">
-                <div className="d-flex align-items-center">
-                  <i className="bi bi-collection me-2 text-success"></i>
-                  <h4 className="mb-0 text-dark">Available Exercises</h4>
-                </div>
-                <span className="badge bg-secondary">
-                  {exerciseList.length} exercise{exerciseList.length !== 1 ? 's' : ''}
-                </span>
+          {/* Exercises list */}
+          <div className="lg:col-span-8">
+            <div className="bg-base-100 rounded-blob border-2 border-water-foam/50 shadow-bubble p-4 min-h-[60vh]">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="font-display font-semibold text-water-deep flex items-center gap-2">
+                  <span className="text-success">●</span>
+                  Available exercises
+                </h2>
+                <span className="badge badge-ghost">{exerciseList.length} exercise{exerciseList.length !== 1 ? 's' : ''}</span>
               </div>
-              
               {exerciseList.length > 0 ? (
-                <div className="row g-3">
-                  {exerciseList.map(exercise => (
-                    <div key={exercise.activityId} className="col-12">
-                      <Link
-                        to="/exercise/start"
-                        state={exercise.exerciseId}
-                        className="exercise-card list-group-item list-group-item-action d-flex justify-content-between align-items-center p-3"
-                      >
-                        <div className="d-flex align-items-center">
-                          <div className="icon-square flex-shrink-0 me-3">
-                            {exercise.classification === 'miniquiz' && (
-                              <i className="bi bi-bookmark-check-fill"></i>
-                            )}
-                            {exercise.classification !== 'miniquiz' && (
-                              <i className="bi bi-play-circle-fill"></i>
-                            )}
+                <div className="space-y-2">
+                  {exerciseList.map((exercise) => (
+                    <Link
+                      key={exercise.activityId}
+                      to="/exercise/start"
+                      state={exercise.exerciseId}
+                      className="flex justify-between items-center p-4 rounded-bubble border-2 border-water-foam/50 hover:border-water-mid hover:shadow-bubble-hover transition-all btn-bouncy bg-base-100"
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="flex-shrink-0 w-10 h-10 rounded-lg bg-primary/20 text-primary flex items-center justify-center text-lg">
+                          {exercise.classification === 'miniquiz' ? '✓' : '▶'}
+                        </span>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-primary">{exercise.activityId}</span>
+                            <span className="badge badge-ghost badge-sm">{exercise.classification}</span>
                           </div>
-                          <div>
-                            <div className="d-flex align-items-center mb-1">
-                              <strong className="text-primary me-2">{exercise.activityId}</strong>
-                              <span className="badge bg-light text-dark">{exercise.classification}</span>
-                            </div>
-                            <div className="text-muted">{exercise.name}</div>
-                          </div>
+                          <div className="text-base-content/80 text-sm">{exercise.name}</div>
                         </div>
-                        <i className="bi bi-chevron-right text-muted fs-5"></i>
-                      </Link>
-                    </div>
+                      </div>
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-base-content/50" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
+                    </Link>
                   ))}
                 </div>
               ) : (
-                <div className="text-center py-5">
-                  <div className="mb-3">
-                    <i className="bi bi-inbox display-1 text-muted"></i>
-                  </div>
-                  <h5 className="text-muted">No exercises selected</h5>
-                  <p className="text-muted mb-0">
-                    Choose a topic and subtopic from the sidebar to view available exercises.
-                  </p>
+                <div className="flex flex-col items-center justify-center py-12 text-center">
+                  <span className="text-4xl text-base-content/30 mb-2">📭</span>
+                  <h3 className="font-display font-semibold text-base-content/70">No exercises selected</h3>
+                  <p className="text-sm text-base-content/60 mt-1">Choose a topic and subtopic from the sidebar.</p>
                 </div>
               )}
             </div>
           </div>
         </div>
 
-        {/* Navigation Footer */}
-        <div className="row mt-4">
-          <div className="col">
-            <Link to="/" className="btn btn-outline-secondary">
-              <i className="bi bi-arrow-left me-2"></i>
-              Back to Home
-            </Link>
-          </div>
+        <div className="mt-8">
+          <Link to="/" className="btn btn-ghost rounded-bubble gap-2">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+            Back to Home
+          </Link>
         </div>
       </div>
     </div>

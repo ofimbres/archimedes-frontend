@@ -16,6 +16,7 @@ export interface SessionInfo {
   sub?: string;
   accessToken?: string;
   refreshToken?: string;
+  idToken?: string;
   user_type?: UserType;
   profile?: Profile | null;
 }
@@ -45,7 +46,7 @@ export interface IAuth {
   completeProfile?: (
     body: import('../types/auth').CompleteProfileBody
   ) => Promise<void>;
-  setSessionFromTokens?: (accessToken: string, refreshToken?: string | null) => Promise<void>;
+  setSessionFromTokens?: (accessToken: string, refreshToken?: string | null, idToken?: string | null) => Promise<void>;
 }
 
 const defaultState: IAuth = {
@@ -88,6 +89,7 @@ export const AuthNeedsProfile = ({ children }: Props) => {
 
 const STORAGE_ACCESS = 'accessToken';
 const STORAGE_REFRESH = 'refreshToken';
+const STORAGE_ID_TOKEN = 'idToken';
 const STORAGE_USERNAME = 'lastUsername';
 
 const AuthProvider = ({ children }: Props) => {
@@ -95,7 +97,7 @@ const AuthProvider = ({ children }: Props) => {
   const [sessionInfo, setSessionInfo] = useState<SessionInfo>({});
   const [attrInfo] = useState<unknown[]>([]);
 
-  const applyMe = useCallback((me: MeResponse, token: string, refresh?: string | null, username?: string) => {
+  const applyMe = useCallback((me: MeResponse, token: string, refresh?: string | null, username?: string, idToken?: string | null) => {
     const hasProfile = me.profile != null;
     const isAdmin = me.user_type === 'admin';
     if (hasProfile || isAdmin) {
@@ -107,6 +109,7 @@ const AuthProvider = ({ children }: Props) => {
       ...prev,
       accessToken: token,
       refreshToken: refresh ?? prev.refreshToken,
+      idToken: idToken ?? prev.idToken,
       username: username ?? prev.username,
       user_type: me.user_type,
       profile: me.profile ?? null,
@@ -125,8 +128,9 @@ const AuthProvider = ({ children }: Props) => {
       .then((me) => {
         if (cancelled) return;
         const refresh = localStorage.getItem(STORAGE_REFRESH);
+        const idToken = localStorage.getItem(STORAGE_ID_TOKEN);
         const username = localStorage.getItem(STORAGE_USERNAME);
-        applyMe(me, token, refresh, username ?? undefined);
+        applyMe(me, token, refresh, username ?? undefined, idToken);
       })
       .catch((err) => {
         if (cancelled) return;
@@ -142,11 +146,12 @@ const AuthProvider = ({ children }: Props) => {
     };
   }, [applyMe]);
 
-  async function setSessionFromTokens(accessToken: string, refreshToken?: string | null) {
+  async function setSessionFromTokens(accessToken: string, refreshToken?: string | null, idToken?: string | null) {
     localStorage.setItem(STORAGE_ACCESS, accessToken);
     if (refreshToken != null) localStorage.setItem(STORAGE_REFRESH, refreshToken);
+    if (idToken != null) localStorage.setItem(STORAGE_ID_TOKEN, idToken);
     const me = await authApi.getMe(accessToken);
-    applyMe(me, accessToken, refreshToken);
+    applyMe(me, accessToken, refreshToken, undefined, idToken);
   }
 
   async function signInWithEmail(
@@ -159,9 +164,10 @@ const AuthProvider = ({ children }: Props) => {
     }
     localStorage.setItem(STORAGE_ACCESS, data.access_token);
     if (data.refresh_token) localStorage.setItem(STORAGE_REFRESH, data.refresh_token);
+    if (data.id_token) localStorage.setItem(STORAGE_ID_TOKEN, data.id_token);
     if (data.user?.username) localStorage.setItem(STORAGE_USERNAME, data.user.username);
     const me = await authApi.getMe(data.access_token);
-    applyMe(me, data.access_token, data.refresh_token ?? null, data.user?.username);
+    applyMe(me, data.access_token, data.refresh_token ?? null, data.user?.username, data.id_token ?? null);
     const needsProfile =
       me.profile == null && me.user_type !== 'admin';
     return { needsProfile };
@@ -204,16 +210,20 @@ const AuthProvider = ({ children }: Props) => {
     localStorage.removeItem(STORAGE_USERNAME);
     localStorage.removeItem(STORAGE_ACCESS);
     localStorage.removeItem(STORAGE_REFRESH);
+    localStorage.removeItem(STORAGE_ID_TOKEN);
     setSessionInfo({});
     setAuthStatus(AuthStatus.SignedOut);
   }
 
   async function completeProfile(body: import('../types/auth').CompleteProfileBody) {
+    const idToken = sessionInfo.idToken ?? localStorage.getItem(STORAGE_ID_TOKEN);
+    if (!idToken) {
+      throw new Error('Session missing ID token. Please sign in again.');
+    }
+    const me = await authApi.completeProfile(idToken, body);
     const token = sessionInfo.accessToken ?? localStorage.getItem(STORAGE_ACCESS);
-    if (!token) throw new Error('Not authenticated');
-    const me = await authApi.completeProfile(token, body);
     const refresh = sessionInfo.refreshToken ?? localStorage.getItem(STORAGE_REFRESH);
-    applyMe(me, token, refresh, sessionInfo.username);
+    applyMe(me, token ?? '', refresh, sessionInfo.username, idToken);
   }
 
   async function verifyCode(username: string, code: string) {

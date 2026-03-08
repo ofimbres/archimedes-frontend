@@ -53,24 +53,29 @@ export async function login(
   return data;
 }
 
+/**
+ * Complete profile. Use the ID token only (not the access token).
+ * Send: Authorization: Bearer <id_token>
+ */
 export async function completeProfile(
-  accessToken: string,
+  idToken: string,
   body: CompleteProfileBody
 ): Promise<MeResponse> {
   const res = await fetch(`${API_BASE}/api/v1/auth/complete-profile`, {
     method: 'POST',
-    headers: authHeaders(accessToken),
+    headers: authHeaders(idToken),
     body: JSON.stringify(body),
   });
   const data = await res.json();
   if (!res.ok) {
+    const message = data.detail ?? data.message ?? 'Failed to complete profile';
     if (res.status === 400) {
-      throw new Error(data.message || 'Invalid profile data');
+      throw new Error(typeof message === 'string' ? message : 'Invalid profile data');
     }
     if (res.status === 404) {
-      throw new Error(data.message || 'Invalid join code or course not found');
+      throw new Error(typeof message === 'string' ? message : 'Invalid join code or course not found');
     }
-    throw new Error(data.message || 'Failed to complete profile');
+    throw new Error(typeof message === 'string' ? message : 'Failed to complete profile');
   }
   return data;
 }
@@ -100,4 +105,31 @@ export async function refreshToken(
 
 export function getOAuthRedirectUrl(): string {
   return `${API_BASE}/api/v1/auth/oauth/redirect`;
+}
+
+/** GET /api/v1/schools/?page=1&size=100 for Complete Profile school dropdown */
+export interface School {
+  id: string;
+  name: string;
+  code?: string;
+}
+
+export interface SchoolsResponse {
+  schools: School[];
+}
+
+export async function getSchools(accessToken: string): Promise<SchoolsResponse> {
+  const res = await fetch(
+    `${API_BASE}/api/v1/schools/?page=1&size=100`,
+    {
+      method: 'GET',
+      headers: authHeaders(accessToken),
+    }
+  );
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.message || 'Failed to load schools');
+  }
+  const data = await res.json();
+  return { schools: data.schools ?? [] };
 }

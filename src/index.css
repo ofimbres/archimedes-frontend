@@ -1,15 +1,25 @@
-/* Import Kid-Friendly Theme */
-@import './styles/kid-friendly.css';
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-body {
-  margin: 0;
-  font-family:
-    'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell',
-    'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+@layer base {
+  html {
+    @apply antialiased;
+  }
+  body {
+    @apply font-display text-water-deep bg-water-surface min-h-screen;
+  }
 }
 
-code {
-  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
+/* Bouncy hover for buttons and cards */
+@layer components {
+  .btn-bouncy {
+    @apply transition-all duration-200 ease-out;
+  }
+  .btn-bouncy:hover {
+    @apply animate-bounce-soft;
+  }
+  .btn-bouncy:active {
+    transform: scale(0.98);
+  }
 }

@@ -1,7 +1,7 @@
 import React from 'react';
-import 'bootstrap/dist/css/bootstrap.css';
-import 'bootstrap/dist/js/bootstrap.js';
+import './index.css';
 import './styles/index.css';
+import './theme.css';
 
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
@@ -47,7 +47,7 @@ import { ErrorBoundary } from './components/common';
 const App: React.FC = () => {
   return (
     <ErrorBoundary>
-      <div className="App">
+      <div className="App" data-theme="archimedes">
         <AuthProvider>
           <BrowserRouter>
             {/* Routes for authenticated users who need to complete profile */}

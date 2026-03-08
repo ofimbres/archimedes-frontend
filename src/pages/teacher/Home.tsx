@@ -5,7 +5,6 @@ import {
   type TeacherCourse,
   type TeacherCoursesResponse,
 } from '../../libs/apiEndpoints';
-import './Home.css';
 
 const Home: React.FC = () => {
   const authContext = useContext(AuthContext);
@@ -21,6 +20,7 @@ const Home: React.FC = () => {
       ? (authContext.sessionInfo.profile as { id: string }).id
       : null;
   const accessToken = authContext.sessionInfo?.accessToken;
+
   useEffect(() => {
     if (!teacherId || !accessToken) {
       setLoading(false);
@@ -41,9 +41,7 @@ const Home: React.FC = () => {
       .finally(() => {
         if (!cancelled) setLoading(false);
       });
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [teacherId, accessToken]);
 
   const copyJoinCode = (course: TeacherCourse) => {
@@ -56,16 +54,17 @@ const Home: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="container mt-5 text-center">
-        <p className="text-muted">Loading your courses…</p>
+      <div className="container max-w-5xl mx-auto px-4 py-12 text-center">
+        <span className="loading loading-spinner loading-lg text-primary" />
+        <p className="mt-4 text-water-mid">Loading your courses…</p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="container mt-5">
-        <div className="alert alert-warning" role="alert">
+      <div className="container max-w-2xl mx-auto px-4 py-8">
+        <div className="alert alert-warning rounded-bubble" role="alert">
           {error}
         </div>
       </div>
@@ -73,47 +72,40 @@ const Home: React.FC = () => {
   }
 
   return (
-    <div className="container mt-5">
-      <h1 className="fs-3 text-center mb-2">My classes</h1>
-      <p className="text-center text-muted mb-4">
+    <div className="container max-w-5xl mx-auto px-4 py-8">
+      <h1 className="font-display font-bold text-2xl text-water-deep text-center mb-2">My classes</h1>
+      <p className="text-center text-water-mid mb-8">
         Share the join code with students so they can join your class.
       </p>
 
       {courses.length === 0 ? (
-        <div className="alert alert-info">
-          You don&apos;t have any courses yet. Create a course in your school
-          portal or contact your admin.
+        <div className="alert alert-info rounded-bubble">
+          <span>You don&apos;t have any courses yet. Create a course in your school portal or contact your admin.</span>
         </div>
       ) : (
-        <div className="row g-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {courses.map((course) => (
-            <div key={course.id} className="col-md-6 col-lg-4">
-              <div className="card h-100 teacher-course-card">
-                <div className="card-body">
-                  <h5 className="card-title">{course.class_name}</h5>
-                  {course.subject && (
-                    <p className="card-text text-muted small mb-2">
-                      {course.subject}
-                      {course.academic_year && ` · ${course.academic_year}`}
-                      {course.semester && ` · ${course.semester}`}
-                    </p>
-                  )}
-                  <div className="d-flex align-items-center justify-content-between mt-3">
-                    <div>
-                      <span className="text-muted small">Join code</span>
-                      <div className="join-code-display fw-bold fs-5 font-monospace">
-                        {course.join_code}
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      className="btn btn-outline-primary btn-sm"
-                      onClick={() => copyJoinCode(course)}
-                      aria-label={`Copy join code ${course.join_code}`}
-                    >
-                      {copiedId === course.id ? 'Copied!' : 'Copy'}
-                    </button>
+            <div key={course.id} className="card bg-base-100 border-2 border-water-foam/50 rounded-blob shadow-bubble btn-bouncy hover:shadow-bubble-hover transition-shadow h-full">
+              <div className="card-body">
+                <h2 className="card-title font-display font-semibold text-water-deep">{course.class_name}</h2>
+                {(course.subject || course.academic_year || course.semester) && (
+                  <p className="text-base-content/70 text-sm mb-2">
+                    {[course.subject, course.academic_year, course.semester].filter(Boolean).join(' · ')}
+                  </p>
+                )}
+                <div className="flex items-center justify-between mt-3 pt-3 border-t border-base-300">
+                  <div>
+                    <span className="text-base-content/60 text-xs block">Join code</span>
+                    <span className="font-mono font-bold text-lg text-water-deep">{course.join_code}</span>
                   </div>
+                  <button
+                    type="button"
+                    className="btn btn-outline btn-primary btn-sm rounded-bubble"
+                    onClick={() => copyJoinCode(course)}
+                    aria-label={`Copy join code ${course.join_code}`}
+                  >
+                    {copiedId === course.id ? 'Copied!' : 'Copy'}
+                  </button>
                 </div>
               </div>
             </div>

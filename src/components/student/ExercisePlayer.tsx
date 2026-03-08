@@ -102,19 +102,17 @@ const ExercisePlayer: React.FC = () => {
   }
 
   return (
-    <div className="do-exercise-page container py-4">
-      {/* Mobile warning for static HTML exercises */}
-      <div className="alert alert-warning d-md-none mb-3" role="alert">
-        This exercise may be best experienced on a larger screen. If content appears cut off, try rotating your device or using a desktop browser.
+    <div className="do-exercise-page container max-w-5xl mx-auto py-6 px-4">
+      <div className="alert alert-warning rounded-bubble md:hidden mb-4" role="alert">
+        <span>This exercise may be best on a larger screen. If content is cut off, try rotating your device or using a desktop browser.</span>
       </div>
-      {/* Responsive iframe container using Bootstrap ratio */}
-      <div className="ratio ratio-16x9">
+      <div className="aspect-video w-full rounded-blob overflow-hidden border-2 border-water-foam/50 shadow-bubble bg-base-100">
         <iframe
           title="Start exercise"
           id="webworksheet-box"
           src={`${miniquizEndpoint}/${exerciseId}.html`}
-          className="w-100 h-100 border-0 rounded"
-          style={{ minHeight: '400px', background: '#fff' }}
+          className="w-full h-full min-h-[400px] border-0"
+          style={{ background: '#fff' }}
           allowFullScreen
         />
       </div>

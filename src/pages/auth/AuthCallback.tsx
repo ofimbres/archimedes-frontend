@@ -4,9 +4,9 @@ import { AuthContext } from '../../contexts/AuthContext';
 
 /**
  * Handles OAuth callback when the backend redirects to the frontend with tokens in the URL.
- * Expects access_token (and optionally refresh_token) in hash or query, e.g.:
- * /auth/callback#access_token=...&refresh_token=...
- * or /auth/callback?access_token=...&refresh_token=...
+ * Expects access_token and id_token (and optionally refresh_token), e.g.:
+ * /auth/callback#access_token=...&id_token=...&refresh_token=...
+ * The backend must include id_token so complete-profile can read email.
  */
 const AuthCallback: React.FC = () => {
   const navigate = useNavigate();
@@ -18,6 +18,7 @@ const AuthCallback: React.FC = () => {
       location.hash?.slice(1) || location.search || ''
     );
     const accessToken = params.get('access_token');
+    const idToken = params.get('id_token');
     const refreshToken = params.get('refresh_token');
 
     if (!accessToken || !setSessionFromTokens) {
@@ -25,7 +26,7 @@ const AuthCallback: React.FC = () => {
       return;
     }
 
-    setSessionFromTokens(accessToken, refreshToken)
+    setSessionFromTokens(accessToken, refreshToken, idToken)
       .then(() => {
         navigate('/', { replace: true });
       })
