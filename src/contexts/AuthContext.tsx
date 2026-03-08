@@ -123,12 +123,12 @@ const AuthProvider = ({ children }: Props) => {
       setAuthStatus(AuthStatus.SignedOut);
       return;
     }
+    const idToken = localStorage.getItem(STORAGE_ID_TOKEN);
     authApi
-      .getMe(token)
+      .getMe(token, idToken)
       .then((me) => {
         if (cancelled) return;
         const refresh = localStorage.getItem(STORAGE_REFRESH);
-        const idToken = localStorage.getItem(STORAGE_ID_TOKEN);
         const username = localStorage.getItem(STORAGE_USERNAME);
         applyMe(me, token, refresh, username ?? undefined, idToken);
       })
@@ -137,6 +137,7 @@ const AuthProvider = ({ children }: Props) => {
         if (err?.message === 'UNAUTHORIZED') {
           localStorage.removeItem(STORAGE_ACCESS);
           localStorage.removeItem(STORAGE_REFRESH);
+          localStorage.removeItem(STORAGE_ID_TOKEN);
           localStorage.removeItem(STORAGE_USERNAME);
         }
         setAuthStatus(AuthStatus.SignedOut);
@@ -150,7 +151,7 @@ const AuthProvider = ({ children }: Props) => {
     localStorage.setItem(STORAGE_ACCESS, accessToken);
     if (refreshToken != null) localStorage.setItem(STORAGE_REFRESH, refreshToken);
     if (idToken != null) localStorage.setItem(STORAGE_ID_TOKEN, idToken);
-    const me = await authApi.getMe(accessToken);
+    const me = await authApi.getMe(accessToken, idToken);
     applyMe(me, accessToken, refreshToken, undefined, idToken);
   }
 
@@ -166,7 +167,7 @@ const AuthProvider = ({ children }: Props) => {
     if (data.refresh_token) localStorage.setItem(STORAGE_REFRESH, data.refresh_token);
     if (data.id_token) localStorage.setItem(STORAGE_ID_TOKEN, data.id_token);
     if (data.user?.username) localStorage.setItem(STORAGE_USERNAME, data.user.username);
-    const me = await authApi.getMe(data.access_token);
+    const me = await authApi.getMe(data.access_token, data.id_token ?? null);
     applyMe(me, data.access_token, data.refresh_token ?? null, data.user?.username, data.id_token ?? null);
     const needsProfile =
       me.profile == null && me.user_type !== 'admin';

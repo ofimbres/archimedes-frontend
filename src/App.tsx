@@ -15,7 +15,7 @@ import StudentProvider from './contexts/StudentContext';
 // Page imports using barrel exports
 import { Home as StudentHome } from './pages/student';
 import Landing from './pages/Landing';
-import { Home as TeacherHome } from './pages/teacher';
+import { Home as TeacherHome, CreateCourse } from './pages/teacher';
 
 // Auth page imports using barrel exports
 import {
@@ -77,6 +77,7 @@ const App: React.FC = () => {
               <StudentNavbar />
               <Routes>
                 <Route path="/" element={<TeacherHome />} />
+                <Route path="/teacher/courses/new" element={<CreateCourse />} />
               </Routes>
             </AuthIsSignedIn>
 

@@ -1,4 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { AuthContext } from '../../contexts/AuthContext';
 import {
   getTeacherCourses,
@@ -74,13 +75,21 @@ const Home: React.FC = () => {
   return (
     <div className="container max-w-5xl mx-auto px-4 py-8">
       <h1 className="font-display font-bold text-2xl text-water-deep text-center mb-2">My classes</h1>
-      <p className="text-center text-water-mid mb-8">
+      <p className="text-center text-water-mid mb-6">
         Share the join code with students so they can join your class.
       </p>
+      <div className="flex justify-center mb-8">
+        <Link
+          to="/teacher/courses/new"
+          className="btn btn-primary rounded-bubble"
+        >
+          Create course
+        </Link>
+      </div>
 
       {courses.length === 0 ? (
         <div className="alert alert-info rounded-bubble">
-          <span>You don&apos;t have any courses yet. Create a course in your school portal or contact your admin.</span>
+          <span>You don&apos;t have any courses yet. Create a course above or contact your admin.</span>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

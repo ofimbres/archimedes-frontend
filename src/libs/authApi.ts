@@ -22,17 +22,23 @@ function authHeaders(accessToken: string): HeadersInit {
   };
 }
 
-export async function getMe(accessToken: string): Promise<MeResponse> {
+/**
+ * GET /auth/me. Prefer idToken when available so the backend receives a token with
+ * the "aud" claim (Cognito access tokens often omit it, causing MissingRequiredClaimError).
+ */
+export async function getMe(accessToken: string, idToken?: string | null): Promise<MeResponse> {
+  const token = idToken ?? accessToken;
   const res = await fetch(`${API_BASE}/api/v1/auth/me`, {
     method: 'GET',
-    headers: authHeaders(accessToken),
+    headers: authHeaders(token),
   });
   if (res.status === 401) {
     throw new Error('UNAUTHORIZED');
   }
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
-    throw new Error(data.message || 'Failed to load profile');
+    const message = data.detail ?? data.message ?? 'Failed to load profile';
+    throw new Error(typeof message === 'string' ? message : 'Failed to load profile');
   }
   return res.json();
 }

@@ -11,6 +11,7 @@ const API_ENDPOINTS = {
   GET_ACTIVITY_RESULTS: () => `${API_BASE_URL}/api/v1/exerciseresults/`,
   GET_TEACHER_COURSES: (teacherId: string) =>
     `${API_BASE_URL}/api/v1/courses/teacher/${teacherId}`,
+  POST_COURSE: () => `${API_BASE_URL}/api/v1/courses/`,
 } as const;
 
 /**
@@ -137,6 +138,15 @@ export interface TeacherCoursesResponse {
   [key: string]: unknown;
 }
 
+/** Body for POST /api/v1/courses/ – backend sets school from teacher */
+export interface CreateCourseBody {
+  class_name: string;
+  teacher_id: string;
+  subject?: string;
+  academic_year?: string;
+  semester?: string;
+}
+
 /**
  * Gets courses for a teacher (includes join_code per course)
  */
@@ -152,5 +162,47 @@ export async function getTeacherCourses(
     throw new Error((err as { message?: string }).message || 'Failed to load courses');
   }
   const data = await response.json();
-  return Array.isArray(data) ? { items: data } : data;
+  if (Array.isArray(data)) return { items: data };
+  // Backend returns { courses, total, page, size, total_pages }
+  if (data && typeof data.courses === 'object' && Array.isArray(data.courses)) {
+    return { items: data.courses, total: data.total, page: data.page, per_page: data.size, total_pages: data.total_pages };
+  }
+  return data;
+}
+
+/** Thrown when POST /courses returns 403 (e.g. course limit reached); detail is the backend message */
+export class CourseLimitError extends Error {
+  constructor(
+    message: string,
+    public readonly status: number = 403
+  ) {
+    super(message);
+    this.name = 'CourseLimitError';
+  }
+}
+
+/**
+ * Create a course. POST /api/v1/courses/
+ * Returns 201 with the created course (includes join_code).
+ * Throws CourseLimitError on 403 with body.detail like "Course limit reached (maximum 6 classes for your plan)".
+ */
+export async function createCourse(
+  body: CreateCourseBody,
+  accessToken: string
+): Promise<TeacherCourse> {
+  const response = await fetch(API_ENDPOINTS.POST_COURSE(), {
+    method: 'POST',
+    headers: getHeaders(accessToken),
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    const detail = (err as { message?: string; detail?: string }).message ?? (err as { detail?: string }).detail ?? 'Failed to create course';
+    const message = typeof detail === 'string' ? detail : 'Failed to create course';
+    if (response.status === 403 && /limit|maximum.*classes/i.test(message)) {
+      throw new CourseLimitError(message, 403);
+    }
+    throw new Error(message);
+  }
+  return response.json();
 }
