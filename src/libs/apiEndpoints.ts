@@ -9,6 +9,8 @@ const API_ENDPOINTS = {
   GET_STUDENT_PERIODS: (studentId: string) =>
     `${API_BASE_URL}/api/v1/students/${studentId}/periods`,
   GET_ACTIVITY_RESULTS: () => `${API_BASE_URL}/api/v1/exerciseresults/`,
+  GET_TEACHER_COURSES: (teacherId: string) =>
+    `${API_BASE_URL}/api/v1/courses/teacher/${teacherId}`,
 } as const;
 
 /**
@@ -112,4 +114,43 @@ export async function getStudentPeriods(studentId: string, accessToken: string):
     console.error('Error getting student periods:', err);
     throw err;
   }
+}
+
+/** Teacher course shape from GET /api/v1/courses/teacher/{teacher_id} */
+export interface TeacherCourse {
+  id: string;
+  class_name: string;
+  subject?: string;
+  join_code: string;
+  academic_year?: string;
+  semester?: string;
+  is_active?: boolean;
+  [key: string]: unknown;
+}
+
+/** Paginated response for teacher courses */
+export interface TeacherCoursesResponse {
+  items: TeacherCourse[];
+  total?: number;
+  page?: number;
+  per_page?: number;
+  [key: string]: unknown;
+}
+
+/**
+ * Gets courses for a teacher (includes join_code per course)
+ */
+export async function getTeacherCourses(
+  teacherId: string,
+  accessToken: string
+): Promise<TeacherCoursesResponse> {
+  const response = await fetch(API_ENDPOINTS.GET_TEACHER_COURSES(teacherId), {
+    headers: getHeaders(accessToken),
+  });
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error((err as { message?: string }).message || 'Failed to load courses');
+  }
+  const data = await response.json();
+  return Array.isArray(data) ? { items: data } : data;
 }

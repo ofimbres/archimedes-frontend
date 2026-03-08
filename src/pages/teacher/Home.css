@@ -1,0 +1,15 @@
+/* Teacher Home – course cards and join code */
+
+.teacher-course-card {
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.teacher-course-card .card-title {
+  margin-bottom: 0.25rem;
+}
+
+.join-code-display {
+  letter-spacing: 0.05em;
+  color: var(--bs-primary, #0d6efd);
+}
