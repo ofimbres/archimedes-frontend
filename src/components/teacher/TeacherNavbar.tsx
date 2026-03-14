@@ -44,10 +44,10 @@ export default function TeacherNavbar() {
   };
 
   return (
-    <div className="navbar bg-base-100 border-b border-base-300 shadow-sm">
+    <div className="navbar bg-water-surface border-b-2 border-water-foam shadow-bubble">
       <div className="navbar-start">
-        <div className="dropdown">
-          <label tabIndex={0} className="btn btn-ghost lg:hidden">
+        <div className="dropdown lg:hidden">
+          <label tabIndex={0} className="btn btn-ghost">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
@@ -57,7 +57,7 @@ export default function TeacherNavbar() {
           </ul>
         </div>
         <Link to="/" className="btn btn-ghost gap-2 text-water-deep font-display font-semibold">
-          <img src="archimedes-logo.jpg" alt="Logo" width={30} height={30} className="rounded-full object-cover" />
+          <img src="/archimedes-logo.jpg" alt="Logo" width={30} height={30} className="rounded-full object-cover" />
           Archimedes
         </Link>
       </div>
@@ -68,7 +68,7 @@ export default function TeacherNavbar() {
       </div>
       <div className="navbar-end gap-2">
         <div className="dropdown dropdown-end">
-          <label tabIndex={0} className="btn btn-ghost btn-sm">
+          <label tabIndex={0} className="btn btn-ghost btn-sm text-water-deep font-medium">
             {selectedCourse ? selectedCourse.class_name : 'Courses'}
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
           </label>
@@ -93,7 +93,7 @@ export default function TeacherNavbar() {
           </ul>
         </div>
         <div className="dropdown dropdown-end">
-          <label tabIndex={0} className="btn btn-ghost btn-sm">
+          <label tabIndex={0} className="btn btn-ghost btn-sm text-water-deep">
             {fullName}
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
           </label>

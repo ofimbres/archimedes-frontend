@@ -57,7 +57,7 @@ export default function StudentNavbar() {
           </ul>
         </div>
         <Link to="/" className="btn btn-ghost gap-2 text-water-deep font-display font-semibold">
-          <img src="archimedes-logo.jpg" alt="Logo" width={30} height={30} className="rounded-full object-cover" />
+          <img src="/archimedes-logo.jpg" alt="Logo" width={30} height={30} className="rounded-full object-cover" />
           Archimedes
         </Link>
       </div>
