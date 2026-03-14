@@ -15,7 +15,7 @@ import StudentProvider from './contexts/StudentContext';
 // Page imports using barrel exports
 import { Home as StudentHome } from './pages/student';
 import Landing from './pages/Landing';
-import { Home as TeacherHome, CreateCourse } from './pages/teacher';
+import { Home as TeacherHome, CreateCourse, CourseRoster, ManageCourses } from './pages/teacher';
 
 // Auth page imports using barrel exports
 import {
@@ -36,6 +36,7 @@ import {
   ExerciseBrowser,
   ExerciseResults,
 } from './components/student';
+import TeacherNavbar from './components/teacher/TeacherNavbar';
 
 // Common components
 import { ErrorBoundary } from './components/common';
@@ -74,10 +75,12 @@ const App: React.FC = () => {
 
             {/* Routes for authenticated teachers */}
             <AuthIsSignedIn role="teachers">
-              <StudentNavbar />
+              <TeacherNavbar />
               <Routes>
                 <Route path="/" element={<TeacherHome />} />
                 <Route path="/teacher/courses/new" element={<CreateCourse />} />
+                <Route path="/teacher/courses/:courseId/roster" element={<CourseRoster />} />
+                <Route path="/teacher/courses" element={<ManageCourses />} />
               </Routes>
             </AuthIsSignedIn>
 

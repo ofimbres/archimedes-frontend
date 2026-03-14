@@ -74,13 +74,13 @@ const CreateCourse: React.FC = () => {
     <div className="container max-w-md mx-auto px-4 py-8">
       <div style={{ paddingBottom: '1rem' }}>
         <Link to="/" className="text-water-mid hover:text-water-deep text-sm font-medium">
-          ← Back to My classes
+          ← Back to Home
         </Link>
       </div>
       <div className="bg-base-100 rounded-blob shadow-bubble border-2 border-water-foam/50 p-6">
         <h1 className="font-display font-bold text-2xl text-water-deep text-center mb-1">Create a course</h1>
         <p className="text-water-mid text-center text-sm mb-6">
-          Add a new class. Students can join using the join code after you create it.
+          Add a new course. Students can join using the join code after you create it.
         </p>
 
         {error && (
