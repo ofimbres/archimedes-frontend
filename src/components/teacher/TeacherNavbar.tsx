@@ -1,13 +1,14 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { AuthContext } from '../../contexts/AuthContext';
-import { getTeacherCourses, type TeacherCourse } from '../../libs/apiEndpoints';
+import { getTeacherCourses, getCourseDisplayName, type TeacherCourse } from '../../libs/apiEndpoints';
 
 export default function TeacherNavbar() {
   const location = useLocation();
   const authContext = useContext(AuthContext);
   const [courses, setCourses] = useState<TeacherCourse[]>([]);
   const [activeItem, setActiveItem] = useState('home');
+  const [coursesDropdownOpen, setCoursesDropdownOpen] = useState(false);
 
   // Selected course from current route (e.g. /teacher/courses/:courseId/roster)
   const courseIdMatch = location.pathname.match(/^\/teacher\/courses\/([^/]+)\/roster/);
@@ -29,7 +30,7 @@ export default function TeacherNavbar() {
     getTeacherCourses(teacherId, accessToken)
       .then((res) => setCourses(res.items ?? []))
       .catch(() => setCourses([]));
-  }, [teacherId, accessToken]);
+  }, [teacherId, accessToken, location.pathname]);
 
   const profile = authContext.sessionInfo?.profile as
     | { full_name?: string; first_name?: string; last_name?: string }
@@ -43,8 +44,16 @@ export default function TeacherNavbar() {
     void authContext.signOut?.();
   };
 
+  const coursesDropdownRef = React.useRef<HTMLDivElement>(null);
+  const closeCoursesDropdown = () => {
+    setCoursesDropdownOpen(false);
+    const trigger = coursesDropdownRef.current?.querySelector('label[tabindex="0"]') as HTMLElement | null;
+    trigger?.blur();
+    (document.activeElement as HTMLElement)?.blur();
+  };
+
   return (
-    <div className="navbar bg-water-surface border-b-2 border-water-foam shadow-bubble">
+    <div className="navbar bg-base-100 border-b border-base-300 shadow-sm">
       <div className="navbar-start">
         <div className="dropdown lg:hidden">
           <label tabIndex={0} className="btn btn-ghost">
@@ -56,7 +65,7 @@ export default function TeacherNavbar() {
             <li><Link to="/" onClick={() => setActiveItem('home')} className={activeItem === 'home' ? 'active' : ''}>Home</Link></li>
           </ul>
         </div>
-        <Link to="/" className="btn btn-ghost gap-2 text-water-deep font-display font-semibold">
+        <Link to="/" className="btn btn-ghost gap-2 text-base-content font-display font-semibold">
           <img src="/archimedes-logo.jpg" alt="Logo" width={30} height={30} className="rounded-full object-cover" />
           Archimedes
         </Link>
@@ -67,12 +76,25 @@ export default function TeacherNavbar() {
         </ul>
       </div>
       <div className="navbar-end gap-2">
-        <div className="dropdown dropdown-end">
-          <label tabIndex={0} className="btn btn-ghost btn-sm text-water-deep font-medium">
-            {selectedCourse ? selectedCourse.class_name : 'Courses'}
+        <div ref={coursesDropdownRef} className={`dropdown dropdown-end ${coursesDropdownOpen ? 'dropdown-open' : ''}`}>
+          <label
+            tabIndex={0}
+            className="btn btn-ghost btn-sm text-base-content font-medium"
+            onClick={() => setCoursesDropdownOpen((o) => !o)}
+            onBlur={(e) => {
+              if (!e.currentTarget.contains(e.relatedTarget)) setCoursesDropdownOpen(false);
+            }}
+          >
+            {selectedCourse ? getCourseDisplayName(selectedCourse) : 'Courses'}
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
           </label>
-          <ul tabIndex={0} className="dropdown-content menu p-2 shadow-lg bg-base-100 rounded-box w-52 z-[1] max-h-64 overflow-y-auto">
+          <ul
+            tabIndex={0}
+            className="dropdown-content menu p-2 shadow-lg bg-base-100 rounded-box w-52 z-[1] max-h-64 overflow-y-auto"
+            onBlur={(e) => {
+              if (!e.currentTarget.contains(e.relatedTarget)) setCoursesDropdownOpen(false);
+            }}
+          >
             {courses.length === 0 ? (
               <li className="text-base-content/60 text-sm">No courses yet</li>
             ) : (
@@ -80,20 +102,25 @@ export default function TeacherNavbar() {
                 <li key={course.id}>
                   <Link
                     to={`/teacher/courses/${course.id}/roster`}
-                    state={{ courseName: course.class_name }}
+                    state={{ courseName: getCourseDisplayName(course) }}
                     className={selectedCourseId === course.id ? 'active font-medium' : ''}
+                    onClick={closeCoursesDropdown}
                   >
-                    {course.class_name}
+                    {getCourseDisplayName(course)}
                   </Link>
                 </li>
               ))
             )}
-            <li><hr /></li>
-            <li><Link to="/teacher/courses">Manage courses</Link></li>
+            <li className="p-0 cursor-default pointer-events-none select-none [&>hr]:my-1 hover:!bg-transparent active:!bg-transparent focus:!bg-transparent" aria-hidden>
+              <hr className="border-base-300" />
+            </li>
+            <li>
+              <Link to="/teacher/courses" onClick={closeCoursesDropdown}>Manage courses</Link>
+            </li>
           </ul>
         </div>
         <div className="dropdown dropdown-end">
-          <label tabIndex={0} className="btn btn-ghost btn-sm text-water-deep">
+          <label tabIndex={0} className="btn btn-ghost btn-sm text-base-content">
             {fullName}
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
           </label>

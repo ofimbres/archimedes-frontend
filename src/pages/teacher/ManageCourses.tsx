@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { AuthContext } from '../../contexts/AuthContext';
 import {
   getTeacherCourses,
+  getCourseDisplayName,
   type TeacherCourse,
   type TeacherCoursesResponse,
 } from '../../libs/apiEndpoints';
@@ -102,7 +103,7 @@ const ManageCourses: React.FC = () => {
           {courses.map((course) => (
             <div key={course.id} className="card bg-base-100 border-2 border-water-foam/50 rounded-blob shadow-bubble btn-bouncy hover:shadow-bubble-hover transition-shadow h-full">
               <div className="card-body">
-                <h2 className="card-title font-display font-semibold text-water-deep">{course.class_name}</h2>
+                <h2 className="card-title font-display font-semibold text-water-deep">{getCourseDisplayName(course)}</h2>
                 {(course.subject || course.academic_year || course.semester) && (
                   <p className="text-base-content/70 text-sm mb-2">
                     {[course.subject, course.academic_year, course.semester].filter(Boolean).join(' · ')}
@@ -122,13 +123,20 @@ const ManageCourses: React.FC = () => {
                     {copiedId === course.id ? 'Copied!' : 'Copy'}
                   </button>
                 </div>
-                <div className="mt-3">
+                <div className="mt-3 flex flex-wrap gap-2">
                   <Link
                     to={`/teacher/courses/${course.id}/roster`}
-                    state={{ courseName: course.class_name }}
+                    state={{ courseName: getCourseDisplayName(course) }}
                     className="btn btn-ghost btn-sm rounded-bubble text-water-mid hover:text-water-deep"
                   >
                     View roster →
+                  </Link>
+                  <Link
+                    to={`/teacher/courses/${course.id}/assignments/new`}
+                    state={{ courseName: getCourseDisplayName(course) }}
+                    className="btn btn-ghost btn-sm rounded-bubble text-water-mid hover:text-water-deep"
+                  >
+                    Create assignment →
                   </Link>
                 </div>
               </div>

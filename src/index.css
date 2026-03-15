@@ -1,13 +1,64 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@plugin "daisyui";
 
+/* Tell Tailwind where to scan for classes (CRA src) */
+@source "./**/*.{js,jsx,ts,tsx}";
+
+/* Custom design tokens (Tailwind v4 @theme) */
+@theme {
+  /* Water / buoyancy palette */
+  --color-water-deep: #0e4c6d;
+  --color-water-mid: #1a7fb8;
+  --color-water-light: #5eb3d6;
+  --color-water-foam: #a8d8ea;
+  --color-water-surface: #e8f4f8;
+  --color-sand-dark: #c4a35a;
+  --color-sand: #e8d5a3;
+  --color-sand-light: #f5e6c8;
+  --color-teal-deep: #0d5c5c;
+  --color-teal-mid: #1a9b9b;
+  --color-teal-light: #4dd4d4;
+  /* Fonts */
+  --font-display: "Fredoka", system-ui, sans-serif;
+  --font-body: "Fredoka", system-ui, sans-serif;
+  /* Radius */
+  --radius-bubble: 2rem;
+  --radius-blob: 2.5rem;
+  /* Shadow */
+  --shadow-bubble: 0 8px 24px -4px rgba(26, 127, 184, 0.2), 0 4px 8px -2px rgba(14, 76, 109, 0.1);
+  --shadow-bubble-hover: 0 12px 32px -4px rgba(26, 127, 184, 0.3), 0 6px 12px -2px rgba(14, 76, 109, 0.15);
+  /* Animation */
+  --animate-bounce-soft: bounce-soft 0.6s ease-in-out;
+  --animate-float: float 4s ease-in-out infinite;
+  --animate-fade-in-up: fade-in-up 0.5s ease-out forwards;
+  --animate-fade-in: fade-in 0.4s ease-out forwards;
+}
+
+@keyframes bounce-soft {
+  0%, 100% { transform: scale(1) translateY(0); }
+  50% { transform: scale(1.03) translateY(-4px); }
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+@keyframes fade-in-up {
+  0% { opacity: 0; transform: translateY(12px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-in {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* Base styles */
 @layer base {
   html {
     @apply antialiased;
   }
   body {
-    @apply font-display text-water-deep bg-water-surface min-h-screen;
+    font-family: var(--font-display);
+    @apply text-water-deep bg-water-surface min-h-screen;
   }
 }
 
@@ -22,4 +73,43 @@
   .btn-bouncy:active {
     transform: scale(0.98);
   }
+}
+
+/* Custom daisyUI themes: archimedes (student) and archimedes-teacher */
+[data-theme="archimedes"] {
+  color-scheme: light;
+  --p: 199 89% 48%;
+  --pc: 0 0% 100%;
+  --s: 180 69% 25%;
+  --sc: 0 0% 100%;
+  --a: 38 57% 72%;
+  --ac: 180 69% 22%;
+  --n: 199 79% 22%;
+  --b1: 195 52% 94%;
+  --b2: 195 58% 81%;
+  --b3: 199 65% 64%;
+  --bc: 199 79% 22%;
+  --in: 199 89% 48%;
+  --su: 180 69% 36%;
+  --wa: 38 57% 58%;
+  --er: 6 55% 56%;
+}
+
+[data-theme="archimedes-teacher"] {
+  color-scheme: light;
+  --p: 180 69% 36%;
+  --pc: 0 0% 100%;
+  --s: 199 89% 48%;
+  --sc: 0 0% 100%;
+  --a: 38 57% 72%;
+  --ac: 180 69% 25%;
+  --n: 199 79% 22%;
+  --b1: 195 52% 94%;
+  --b2: 195 58% 81%;
+  --b3: 199 65% 64%;
+  --bc: 199 79% 22%;
+  --in: 180 69% 36%;
+  --su: 180 69% 36%;
+  --wa: 38 57% 58%;
+  --er: 6 55% 56%;
 }

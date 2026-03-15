@@ -1,9 +1,7 @@
-const path = require('path');
-
 module.exports = {
   style: {
     postcss: {
-      plugins: [require('tailwindcss'), require('autoprefixer')],
+      mode: 'file', // Use postcss.config.js so Tailwind + daisyUI process @tailwind directives
     },
   },
 };

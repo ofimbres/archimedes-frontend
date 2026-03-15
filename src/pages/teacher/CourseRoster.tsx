@@ -107,12 +107,23 @@ const CourseRoster: React.FC = () => {
           ← Back to Home
         </Link>
       </div>
-      <h1 className="font-display font-bold text-2xl text-water-deep mb-1">
-        Students · {courseName}
-      </h1>
-      <p className="text-water-mid text-sm mb-6">
-        Enrolled students in this course (roster).
-      </p>
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div>
+          <h1 className="font-display font-bold text-2xl text-water-deep mb-1">
+            Students · {courseName}
+          </h1>
+          <p className="text-water-mid text-sm">
+            Enrolled students in this course (roster).
+          </p>
+        </div>
+        <Link
+          to={`/teacher/courses/${courseId}/assignments/new`}
+          state={{ courseName }}
+          className="btn btn-primary rounded-bubble"
+        >
+          Create assignment
+        </Link>
+      </div>
 
       <div className="flex flex-wrap gap-2 items-center mb-6">
         <span className="font-display font-semibold text-water-deep">Add student</span>

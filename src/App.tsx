@@ -1,21 +1,22 @@
 import React from 'react';
 import './index.css';
 import './styles/index.css';
-import './theme.css';
 
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 
 import AuthProvider, {
+  AuthContext,
   AuthIsSignedIn,
   AuthIsNotSignedIn,
   AuthNeedsProfile,
+  AuthStatus,
 } from './contexts/AuthContext';
 import StudentProvider from './contexts/StudentContext';
 
 // Page imports using barrel exports
 import { Home as StudentHome } from './pages/student';
 import Landing from './pages/Landing';
-import { Home as TeacherHome, CreateCourse, CourseRoster, ManageCourses } from './pages/teacher';
+import { Home as TeacherHome, CreateCourse, CourseRoster, ManageCourses, CreateAssignment } from './pages/teacher';
 
 // Auth page imports using barrel exports
 import {
@@ -41,6 +42,19 @@ import TeacherNavbar from './components/teacher/TeacherNavbar';
 // Common components
 import { ErrorBoundary } from './components/common';
 
+/** Syncs daisyUI theme to document root so styles apply before/after auth and on login */
+function ThemeSync({ children }: { children: React.ReactNode }) {
+  const { authStatus, sessionInfo } = React.useContext(AuthContext);
+  React.useEffect(() => {
+    const theme =
+      authStatus === AuthStatus.SignedIn && sessionInfo?.user_type === 'teachers'
+        ? 'archimedes-teacher'
+        : 'archimedes';
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [authStatus, sessionInfo?.user_type]);
+  return <>{children}</>;
+}
+
 /**
  * Main App component with role-based routing and authentication
  * Uses a single BrowserRouter instance to prevent routing conflicts
@@ -48,8 +62,9 @@ import { ErrorBoundary } from './components/common';
 const App: React.FC = () => {
   return (
     <ErrorBoundary>
-      <div className="App" data-theme="archimedes">
+      <div className="App">
         <AuthProvider>
+          <ThemeSync>
           <BrowserRouter>
             {/* Routes for authenticated users who need to complete profile */}
             <AuthNeedsProfile>
@@ -61,27 +76,32 @@ const App: React.FC = () => {
 
             {/* Routes for authenticated students */}
             <AuthIsSignedIn role="students">
-              <StudentProvider>
-                <StudentNavbar />
-                <Routes>
-                  <Route path="/" element={<StudentHome />} />
-                  <Route path="/enroll-period" element={<ClassEnrollment />} />
-                  <Route path="/exercise/select" element={<ExerciseBrowser />} />
-                  <Route path="/exercise/start" element={<ExercisePlayer />} />
-                  <Route path="/exercise/completed" element={<ExerciseResults />} />
-                </Routes>
-              </StudentProvider>
+              <div data-theme="archimedes" className="min-h-screen">
+                <StudentProvider>
+                  <StudentNavbar />
+                  <Routes>
+                    <Route path="/" element={<StudentHome />} />
+                    <Route path="/enroll-period" element={<ClassEnrollment />} />
+                    <Route path="/exercise/select" element={<ExerciseBrowser />} />
+                    <Route path="/exercise/start" element={<ExercisePlayer />} />
+                    <Route path="/exercise/completed" element={<ExerciseResults />} />
+                  </Routes>
+                </StudentProvider>
+              </div>
             </AuthIsSignedIn>
 
             {/* Routes for authenticated teachers */}
             <AuthIsSignedIn role="teachers">
-              <TeacherNavbar />
-              <Routes>
+              <div data-theme="archimedes-teacher" className="min-h-screen">
+                <TeacherNavbar />
+                <Routes>
                 <Route path="/" element={<TeacherHome />} />
                 <Route path="/teacher/courses/new" element={<CreateCourse />} />
+                <Route path="/teacher/courses/:courseId/assignments/new" element={<CreateAssignment />} />
                 <Route path="/teacher/courses/:courseId/roster" element={<CourseRoster />} />
                 <Route path="/teacher/courses" element={<ManageCourses />} />
-              </Routes>
+                </Routes>
+              </div>
             </AuthIsSignedIn>
 
             {/* Routes for authenticated admins */}
@@ -102,6 +122,7 @@ const App: React.FC = () => {
               </Routes>
             </AuthIsNotSignedIn>
           </BrowserRouter>
+          </ThemeSync>
         </AuthProvider>
       </div>
     </ErrorBoundary>

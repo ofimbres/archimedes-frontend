@@ -23,7 +23,7 @@ const CreateCourse: React.FC = () => {
       ? (authContext.sessionInfo.profile as { id: string }).id
       : null;
 
-  const [class_name, setClassName] = useState('');
+  const [courseName, setCourseName] = useState('');
   const [error, setError] = useState('');
   const [courseLimitReached, setCourseLimitReached] = useState(false);
   const [maxClasses, setMaxClasses] = useState(6);
@@ -32,8 +32,8 @@ const CreateCourse: React.FC = () => {
   const canSubmit =
     !!teacherId &&
     !!accessToken &&
-    class_name.trim().length >= 1 &&
-    class_name.trim().length <= 100;
+    courseName.trim().length >= 1 &&
+    courseName.trim().length <= 100;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,7 +42,7 @@ const CreateCourse: React.FC = () => {
     setError('');
     setCourseLimitReached(false);
     const body: CreateCourseBody = {
-      class_name: class_name.trim(),
+      course_name: courseName.trim(),
       teacher_id: teacherId,
       subject: 'General',
     };
@@ -102,20 +102,20 @@ const CreateCourse: React.FC = () => {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label htmlFor="class_name" className="label">
+            <label htmlFor="courseName" className="label">
               <span className="label-text font-medium">Course name</span>
             </label>
             <input
-              id="class_name"
+              id="courseName"
               type="text"
               className={inputClass}
               placeholder="e.g. Algebra I"
-              value={class_name}
-              onChange={(e) => setClassName(e.target.value)}
+              value={courseName}
+              onChange={(e) => setCourseName(e.target.value)}
               maxLength={100}
               required
             />
-            <span className="label-text-alt text-base-content/60">{class_name.length}/100</span>
+            <span className="label-text-alt text-base-content/60">{courseName.length}/100</span>
           </div>
 
           <div className="pt-4 flex gap-3">

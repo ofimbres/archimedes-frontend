@@ -109,8 +109,15 @@ export async function refreshToken(
   return data;
 }
 
+/**
+ * URL for "Sign in with Google". Append prompt=select_account so Google shows the
+ * account picker instead of auto-signing in with the last used account.
+ * Backend should forward this to the Cognito/Google authorize URL.
+ */
 export function getOAuthRedirectUrl(): string {
-  return `${API_BASE}/api/v1/auth/oauth/redirect`;
+  const base = `${API_BASE}/api/v1/auth/oauth/redirect`;
+  const params = new URLSearchParams({ prompt: 'select_account' });
+  return `${base}?${params.toString()}`;
 }
 
 /** GET /api/v1/schools/?page=1&size=100 for Complete Profile school dropdown */

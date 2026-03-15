@@ -1,3 +1,7 @@
+/**
+ * Legacy Tailwind v3 config – kept for IDE/IntelliSense only.
+ * Tailwind v4 uses @theme and @plugin in src/index.css instead.
+ */
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: ['./src/**/*.{js,jsx,ts,tsx}', './public/index.html'],
@@ -78,6 +82,25 @@ module.exports = {
           'base-300': '#5eb3d6',
           'base-content': '#0e4c6d',
           info: '#1a7fb8',
+          success: '#1a9b9b',
+          warning: '#c4a35a',
+          error: '#c45c4a',
+        },
+      },
+      {
+        'archimedes-teacher': {
+          primary: '#1a9b9b',
+          'primary-content': '#ffffff',
+          secondary: '#1a7fb8',
+          'secondary-content': '#ffffff',
+          accent: '#e8d5a3',
+          'accent-content': '#0d5c5c',
+          neutral: '#0e4c6d',
+          'base-100': '#e8f4f8',
+          'base-200': '#a8d8ea',
+          'base-300': '#5eb3d6',
+          'base-content': '#0e4c6d',
+          info: '#1a9b9b',
           success: '#1a9b9b',
           warning: '#c4a35a',
           error: '#c45c4a',

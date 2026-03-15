@@ -9,7 +9,7 @@ import {
 } from '../../hooks/UseAuthHooks';
 import { AuthContext } from '../../contexts/AuthContext';
 
-const inputClass = 'input input-bordered rounded-bubble border-2 border-water-foam w-full focus:border-water-mid focus:outline-none';
+const inputClass = 'input input-bordered rounded-bubble border-2 border-water-foam w-full focus:border-primary focus:outline-none';
 const inputInvalidClass = 'input input-bordered input-error rounded-bubble border-2 w-full';
 
 const SignUp: React.FC = () => {

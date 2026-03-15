@@ -4,8 +4,8 @@ import { AuthContext } from '../../contexts/AuthContext';
 import { getSchools, type School } from '../../libs/authApi';
 import type { CompleteProfileBody } from '../../types/auth';
 
-const inputClass = 'input input-bordered rounded-bubble border-2 border-water-foam w-full focus:border-water-mid focus:outline-none';
-const selectClass = 'input input-bordered rounded-bubble border-2 border-water-foam w-full focus:border-water-mid focus:outline-none bg-white';
+const inputClass = 'input input-bordered rounded-bubble border-2 border-water-foam w-full focus:border-primary focus:outline-none';
+const selectClass = 'input input-bordered rounded-bubble border-2 border-water-foam w-full focus:border-primary focus:outline-none bg-white';
 
 const CompleteProfile: React.FC = () => {
   const [role, setRole] = useState<'students' | 'teachers' | ''>('');
@@ -62,8 +62,8 @@ const CompleteProfile: React.FC = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-water-surface via-water-foam/30 to-sand-light/40 px-4">
       <div className="w-full max-w-md">
-        <div style={{ paddingTop: '1rem', paddingBottom: '1rem' }}>
-          <Link to="/signin" className="text-water-mid hover:text-water-deep text-sm font-medium inline-block">
+        <div className="pt-4 pb-4">
+          <Link to="/signin" className="link link-primary text-sm font-medium inline-block">
             ← Back to Sign In
           </Link>
         </div>

@@ -3,7 +3,6 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useValidUsername, useValidPassword } from '../../hooks/UseAuthHooks';
 import { AuthContext } from '../../contexts/AuthContext';
 import { getOAuthRedirectUrl } from '../../libs/authApi';
-import './SignIn.css';
 
 const SignIn: React.FC = () => {
   const { username, setUsername, usernameIsValid } = useValidUsername('');
@@ -43,86 +42,100 @@ const SignIn: React.FC = () => {
   };
 
   return (
-    <div className="signin">
-      <div className="signin__wrap">
-        <Link to="/" className="signin__back">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-water-surface via-water-foam/30 to-sand-light/40 font-display p-4">
+      <div className="w-full max-w-md">
+        <Link to="/" className="link link-primary text-sm font-medium mb-4 inline-block">
           ← Back to Home
         </Link>
 
-        <div className="signin__card">
-          <img
-            src="archimedes-logo.jpg"
-            alt="Archimedes Logo"
-            className="signin__logo"
-          />
-          <h1 className="signin__title">Welcome back!</h1>
-          <p className="signin__subtitle">Sign in to continue your learning adventure</p>
-
-          <div className="signin__google-wrap">
-            <a
-              href={getOAuthRedirectUrl()}
-              className="signin__google"
-              aria-label="Sign in with Google"
-            >
-              <svg className="signin__google-icon" viewBox="0 0 24 24" width="20" height="20" aria-hidden>
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
-              </svg>
-              Sign in with Google
-            </a>
-          </div>
-          <p className="signin__divider">— or sign in with email —</p>
-
-          {error && (
-            <div className="signin__error" role="alert">
-              <strong>Oops!</strong> {error}
-            </div>
-          )}
-
-          <form onSubmit={handleSignIn} className="signin__form">
-            <div className="signin__field">
-              <label className="signin__label" htmlFor="signin-email">Email</label>
-              <input
-                id="signin-email"
-                type="email"
-                placeholder="Enter your email"
-                value={username}
-                onChange={(e) => { setUsername(e.target.value); setError(''); }}
-                disabled={isLoading}
-                className="signin__input"
-              />
-            </div>
-            <div className="signin__field">
-              <label className="signin__label" htmlFor="signin-password">Password</label>
-              <input
-                id="signin-password"
-                type="password"
-                placeholder="Enter your password"
-                value={password}
-                onChange={(e) => { setPassword(e.target.value); setError(''); }}
-                disabled={isLoading}
-                className="signin__input"
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={isValid || isLoading}
-              className="signin__submit"
-            >
-              {isLoading ? 'Signing in…' : 'Sign In'}
-            </button>
-          </form>
-
-          <div className="signin__links">
-            <p>
-              Don&apos;t have an account?{' '}
-              <Link to="/signup">Start learning today</Link>
+        <div className="card bg-base-100 border-2 border-base-300 rounded-blob shadow-bubble">
+          <div className="card-body p-8">
+            <img
+              src="archimedes-logo.jpg"
+              alt="Archimedes Logo"
+              className="w-20 h-20 rounded-full object-cover mx-auto mb-4 shadow-md"
+            />
+            <h1 className="font-display font-bold text-2xl text-water-deep text-center mb-1">
+              Welcome back!
+            </h1>
+            <p className="text-water-mid text-sm text-center mb-6">
+              Sign in to continue your learning adventure
             </p>
-            <p>
-              <Link to="/requestcode">Forgot your password?</Link>
-            </p>
+
+            <div className="text-center mb-4">
+              <a
+                href={getOAuthRedirectUrl()}
+                className="btn btn-outline btn-primary rounded-bubble gap-2"
+                aria-label="Sign in with Google"
+              >
+                <svg className="shrink-0" viewBox="0 0 24 24" width="20" height="20" aria-hidden>
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                </svg>
+                Sign in with Google
+              </a>
+            </div>
+            <p className="text-center text-water-mid text-xs mb-4">— or sign in with email —</p>
+
+            {error && (
+              <div className="alert alert-error rounded-bubble mb-4" role="alert">
+                <strong>Oops!</strong> {error}
+              </div>
+            )}
+
+            <form onSubmit={handleSignIn} className="flex flex-col gap-4">
+              <div className="form-control">
+                <label className="label" htmlFor="signin-email">
+                  <span className="label-text font-semibold text-water-deep">Email</span>
+                </label>
+                <input
+                  id="signin-email"
+                  type="email"
+                  placeholder="Enter your email"
+                  value={username}
+                  onChange={(e) => { setUsername(e.target.value); setError(''); }}
+                  disabled={isLoading}
+                  className="input input-bordered rounded-bubble border-2 border-water-foam w-full focus:border-primary focus:outline-none"
+                />
+              </div>
+              <div className="form-control">
+                <label className="label" htmlFor="signin-password">
+                  <span className="label-text font-semibold text-water-deep">Password</span>
+                </label>
+                <input
+                  id="signin-password"
+                  type="password"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => { setPassword(e.target.value); setError(''); }}
+                  disabled={isLoading}
+                  className="input input-bordered rounded-bubble border-2 border-water-foam w-full focus:border-primary focus:outline-none"
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={isValid || isLoading}
+                className="btn btn-primary rounded-bubble w-full btn-bouncy"
+              >
+                {isLoading ? 'Signing in…' : 'Sign In'}
+              </button>
+            </form>
+
+            <div className="text-center mt-6 text-sm space-y-1">
+              <p>
+                Don&apos;t have an account?{' '}
+                <Link to="/signup" className="link link-primary font-medium">
+                  Start learning today
+                </Link>
+              </p>
+              <p>
+                <Link to="/requestcode" className="link link-primary font-medium">
+                  Forgot your password?
+                </Link>
+              </p>
+            </div>
           </div>
         </div>
       </div>
