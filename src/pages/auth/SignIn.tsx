@@ -42,23 +42,23 @@ const SignIn: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-water-surface via-water-foam/30 to-sand-light/40 font-display p-4">
+    <div className="min-h-screen flex items-center justify-center bg-water-surface font-display p-4">
       <div className="w-full max-w-md">
         <Link to="/" className="link link-primary text-sm font-medium mb-4 inline-block">
           ← Back to Home
         </Link>
 
-        <div className="card bg-base-100 border-2 border-base-300 rounded-blob shadow-bubble">
+        <div className="card bg-base-100 border border-base-300 rounded-box shadow-lg">
           <div className="card-body p-8">
             <img
               src="archimedes-logo.jpg"
               alt="Archimedes Logo"
               className="w-20 h-20 rounded-full object-cover mx-auto mb-4 shadow-md"
             />
-            <h1 className="font-display font-bold text-2xl text-water-deep text-center mb-1">
+            <h1 className="font-display font-bold text-2xl text-base-content text-center mb-1">
               Welcome back!
             </h1>
-            <p className="text-water-mid text-sm text-center mb-6">
+            <p className="text-base-content/70 text-sm text-center mb-6">
               Sign in to continue your learning adventure
             </p>
 
@@ -77,10 +77,10 @@ const SignIn: React.FC = () => {
                 Sign in with Google
               </a>
             </div>
-            <p className="text-center text-water-mid text-xs mb-4">— or sign in with email —</p>
+            <p className="text-center text-base-content/70 text-xs mb-4">— or sign in with email —</p>
 
             {error && (
-              <div className="alert alert-error rounded-bubble mb-4" role="alert">
+              <div className="alert alert-error mb-4" role="alert">
                 <strong>Oops!</strong> {error}
               </div>
             )}
@@ -88,7 +88,7 @@ const SignIn: React.FC = () => {
             <form onSubmit={handleSignIn} className="flex flex-col gap-4">
               <div className="form-control">
                 <label className="label" htmlFor="signin-email">
-                  <span className="label-text font-semibold text-water-deep">Email</span>
+                  <span className="label-text font-semibold">Email</span>
                 </label>
                 <input
                   id="signin-email"
@@ -97,12 +97,12 @@ const SignIn: React.FC = () => {
                   value={username}
                   onChange={(e) => { setUsername(e.target.value); setError(''); }}
                   disabled={isLoading}
-                  className="input input-bordered rounded-bubble border-2 border-water-foam w-full focus:border-primary focus:outline-none"
+                  className="input input-bordered w-full rounded-bubble border-2 border-water-foam bg-white focus:border-primary focus:outline-none"
                 />
               </div>
               <div className="form-control">
                 <label className="label" htmlFor="signin-password">
-                  <span className="label-text font-semibold text-water-deep">Password</span>
+                  <span className="label-text font-semibold">Password</span>
                 </label>
                 <input
                   id="signin-password"
@@ -111,13 +111,13 @@ const SignIn: React.FC = () => {
                   value={password}
                   onChange={(e) => { setPassword(e.target.value); setError(''); }}
                   disabled={isLoading}
-                  className="input input-bordered rounded-bubble border-2 border-water-foam w-full focus:border-primary focus:outline-none"
+                  className="input input-bordered w-full rounded-bubble border-2 border-water-foam bg-white focus:border-primary focus:outline-none"
                 />
               </div>
               <button
                 type="submit"
                 disabled={isValid || isLoading}
-                className="btn btn-primary rounded-bubble w-full btn-bouncy"
+                className="btn btn-primary w-full rounded-bubble btn-bouncy"
               >
                 {isLoading ? 'Signing in…' : 'Sign In'}
               </button>

@@ -93,4 +93,6 @@ https://docs.amplify.aws/cli/auth/import/#unlink-an-existing-cognito-user-pool-o
 Amplify retrieve user authentication
 https://medium.com/@dantasfiles/three-methods-to-get-user-information-in-aws-amplify-authentication-e4e39e658c33
 
-📌 Note: This project uses GitHub Copilot with UI generation guidelines defined in [`.github/COPILOT_GUIDE.md`](./.github/COPILOT_GUIDE.md).
+📌 Note: This project uses GitHub Copilot with UI generation guidelines defined in [`.github/copilot-instructions.md`](./.github/copilot-instructions.md).
+
+**Styling:** Tailwind CSS v4 + daisyUI v5 (see [KID_FRIENDLY_DESIGN_SUMMARY.md](./KID_FRIENDLY_DESIGN_SUMMARY.md) and [DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md)).

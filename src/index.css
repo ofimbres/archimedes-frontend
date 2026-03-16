@@ -1,10 +1,17 @@
 @import "tailwindcss";
-@plugin "daisyui";
+@plugin "daisyui" {
+  /* Use only our themes so daisyUI never applies default "light" (purple primary) */
+  themes: archimedes --default, archimedes-student, archimedes-teacher;
+}
 
 /* Tell Tailwind where to scan for classes (CRA src) */
 @source "./**/*.{js,jsx,ts,tsx}";
 
-/* Custom design tokens (Tailwind v4 @theme) */
+/* Custom design tokens (Tailwind v4 @theme)
+ * Use semantic classes (primary, base-content, base-100, etc.) for components
+ * so they follow the active theme. Use water-/teal-/sand-* for shared branding
+ * (e.g. body bg, borders) that stays the same for both roles.
+ */
 @theme {
   /* Water / buoyancy palette */
   --color-water-deep: #0e4c6d;
@@ -73,10 +80,25 @@
   .btn-bouncy:active {
     transform: scale(0.98);
   }
+
+  /* Menu/dropdown item hover so navbar and dropdowns show clear feedback */
+  .menu li > a:hover,
+  .menu li > button:hover {
+    @apply bg-base-200;
+  }
+  .menu li > a:focus-visible,
+  .menu li > button:focus-visible {
+    @apply bg-base-200 outline-none;
+  }
 }
 
-/* Custom daisyUI themes: archimedes (student) and archimedes-teacher */
-[data-theme="archimedes"] {
+/* Custom daisyUI themes: archimedes (public), archimedes-student, archimedes-teacher
+ * --p/--pc = primary / primary-content   --s/--sc = secondary
+ * --b1/--b2/--b3 = base backgrounds       --bc = base-content (text)
+ * archimedes & archimedes-student: primary blue (water); archimedes-teacher: primary teal
+ */
+[data-theme="archimedes"],
+[data-theme="archimedes-student"] {
   color-scheme: light;
   --p: 199 89% 48%;
   --pc: 0 0% 100%;

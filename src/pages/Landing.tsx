@@ -6,7 +6,7 @@ import { Link } from 'react-router-dom';
  */
 const Landing: React.FC = () => {
   return (
-    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-gradient-to-br from-water-surface via-water-foam/30 to-sand-light/40 font-display">
+    <div className="min-h-screen flex items-center justify-center relative overflow-hidden bg-water-surface font-display">
       {/* Decorative bubbles */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         <div className="absolute w-24 h-24 rounded-full bg-water-light/40 -top-4 left-[10%] animate-float" />

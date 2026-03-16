@@ -14,9 +14,10 @@ import AuthProvider, {
 import StudentProvider from './contexts/StudentContext';
 
 // Page imports using barrel exports
-import { Home as StudentHome } from './pages/student';
+import { Home as StudentHome, Assignments as StudentAssignments } from './pages/student';
 import Landing from './pages/Landing';
 import { Home as TeacherHome, CreateCourse, CourseRoster, ManageCourses, CreateAssignment } from './pages/teacher';
+import AssignmentProgress from './pages/teacher/AssignmentProgress';
 
 // Auth page imports using barrel exports
 import {
@@ -49,7 +50,9 @@ function ThemeSync({ children }: { children: React.ReactNode }) {
     const theme =
       authStatus === AuthStatus.SignedIn && sessionInfo?.user_type === 'teachers'
         ? 'archimedes-teacher'
-        : 'archimedes';
+        : authStatus === AuthStatus.SignedIn && sessionInfo?.user_type === 'students'
+          ? 'archimedes-student'
+          : 'archimedes';
     document.documentElement.setAttribute('data-theme', theme);
   }, [authStatus, sessionInfo?.user_type]);
   return <>{children}</>;
@@ -76,11 +79,12 @@ const App: React.FC = () => {
 
             {/* Routes for authenticated students */}
             <AuthIsSignedIn role="students">
-              <div data-theme="archimedes" className="min-h-screen">
+              <div data-theme="archimedes-student" className="min-h-screen">
                 <StudentProvider>
                   <StudentNavbar />
                   <Routes>
                     <Route path="/" element={<StudentHome />} />
+                    <Route path="/assignments" element={<StudentAssignments />} />
                     <Route path="/enroll-period" element={<ClassEnrollment />} />
                     <Route path="/exercise/select" element={<ExerciseBrowser />} />
                     <Route path="/exercise/start" element={<ExercisePlayer />} />
@@ -98,6 +102,7 @@ const App: React.FC = () => {
                 <Route path="/" element={<TeacherHome />} />
                 <Route path="/teacher/courses/new" element={<CreateCourse />} />
                 <Route path="/teacher/courses/:courseId/assignments/new" element={<CreateAssignment />} />
+                <Route path="/teacher/courses/:courseId/assignments/:assignmentId" element={<AssignmentProgress />} />
                 <Route path="/teacher/courses/:courseId/roster" element={<CourseRoster />} />
                 <Route path="/teacher/courses" element={<ManageCourses />} />
                 </Routes>

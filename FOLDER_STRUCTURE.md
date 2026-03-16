@@ -31,7 +31,7 @@ src/
 │   └── index.ts
 ├── constants/          # Application constants
 │   └── index.ts
-├── styles/             # Global styles and themes
+├── styles/             # Global layout styles (reset, #root, .App)
 │   └── index.css
 └── libs/               # Third-party library configurations
     └── apiEndpoints.js
@@ -76,7 +76,7 @@ src/
 2. **Single Responsibility**: Each file should have one primary purpose
 3. **Consistent Naming**: Use PascalCase for components, camelCase for functions/variables
 4. **Type Safety**: Leverage TypeScript for better developer experience
-5. **Bootstrap Integration**: Follow Bootstrap conventions and React-Bootstrap patterns
+5. **Tailwind + daisyUI**: Use Tailwind utilities and daisyUI component classes; see `src/index.css` for theme tokens
 
 ## 🔧 File Naming Conventions
 

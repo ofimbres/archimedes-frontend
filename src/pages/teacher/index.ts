@@ -4,3 +4,4 @@ export { default as CreateCourse } from './CreateCourse';
 export { default as CourseRoster } from './CourseRoster';
 export { default as ManageCourses } from './ManageCourses';
 export { default as CreateAssignment } from './CreateAssignment';
+export { default as AssignmentProgress } from './AssignmentProgress';

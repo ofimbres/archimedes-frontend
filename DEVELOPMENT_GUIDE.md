@@ -1,6 +1,6 @@
 # 📚 Archimedes Frontend
 
-A modern React TypeScript application for educational management, built with Bootstrap 5 and following best practices for scalable frontend development.
+A modern React TypeScript application for educational management, built with **Tailwind CSS v4** and **daisyUI v5** for styling, and following best practices for scalable frontend development.
 
 ## 🚀 Quick Start
 
@@ -57,11 +57,12 @@ npm run type-check    # TypeScript type checking
 
 ## 🎨 UI Guidelines
 
-### Bootstrap 5 Integration
-- Responsive design with Bootstrap grid system
-- Consistent component styling using Bootstrap classes
-- Custom CSS variables for theme customization
-- React Bootstrap components where beneficial
+### Tailwind CSS + daisyUI
+- **Tailwind v4** for utilities and design tokens (`@theme` in `src/index.css`)
+- **daisyUI v5** for components (btn, card, navbar, form-control, menu, etc.)
+- Role-based themes: `archimedes` (students/guests) and `archimedes-teacher` (teachers), synced via `data-theme` on `<html>`
+- Use semantic theme classes (`btn-primary`, `bg-base-100`, `text-base-content`) so UI follows the active theme
+- Custom tokens: water/sand/teal palette, `rounded-bubble`, `shadow-bubble`, `animate-float` (see `src/index.css`)
 
 ### Component Structure
 - **Functional components** with React hooks
@@ -85,7 +86,7 @@ npm run type-check    # TypeScript type checking
 
 The application is fully responsive with:
 - **Mobile-first approach**
-- **Bootstrap breakpoints** (xs, sm, md, lg, xl, xxl)
+- **Tailwind breakpoints** (sm, md, lg, xl, 2xl)
 - **Flexible grid layouts**
 - **Touch-friendly interactions**
 

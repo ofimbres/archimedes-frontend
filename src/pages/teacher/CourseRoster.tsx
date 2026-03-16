@@ -8,7 +8,9 @@ import {
   getCourseEnrollments,
   deleteStudentEnrollment,
   postStudentEnrollment,
+  getTeacherCourseAssignments,
   type CourseEnrollment,
+  type Assignment,
 } from '../../libs/apiEndpoints';
 
 const CourseRoster: React.FC = () => {
@@ -17,6 +19,12 @@ const CourseRoster: React.FC = () => {
   const authContext = useContext(AuthContext);
   const accessToken = authContext.sessionInfo?.accessToken;
   const courseName = (location.state as { courseName?: string } | null)?.courseName ?? 'Course';
+  const teacherId =
+    authContext.sessionInfo?.user_type === 'teachers' &&
+    authContext.sessionInfo?.profile &&
+    'id' in authContext.sessionInfo.profile
+      ? (authContext.sessionInfo.profile as { id: string }).id
+      : null;
 
   const [enrollments, setEnrollments] = useState<CourseEnrollment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,6 +33,8 @@ const CourseRoster: React.FC = () => {
   const [addLoading, setAddLoading] = useState(false);
   const [addError, setAddError] = useState<string | null>(null);
   const [removingId, setRemovingId] = useState<string | null>(null);
+  const [assignments, setAssignments] = useState<Assignment[]>([]);
+  const [assignmentsLoading, setAssignmentsLoading] = useState(false);
 
   const fetchRoster = useCallback(() => {
     if (!courseId || !accessToken) return;
@@ -43,6 +53,20 @@ const CourseRoster: React.FC = () => {
     }
     fetchRoster();
   }, [courseId, accessToken, fetchRoster]);
+
+  useEffect(() => {
+    if (!courseId || !accessToken) return;
+    if (!teacherId) {
+      setAssignments([]);
+      setAssignmentsLoading(false);
+      return;
+    }
+    setAssignmentsLoading(true);
+    getTeacherCourseAssignments(teacherId, courseId, accessToken)
+      .then((list) => setAssignments(list ?? []))
+      .catch(() => setAssignments([]))
+      .finally(() => setAssignmentsLoading(false));
+  }, [courseId, accessToken, teacherId]);
 
   const handleRemove = async (studentId: string) => {
     if (!courseId || !accessToken || !window.confirm('Remove this student from the course?')) return;
@@ -124,6 +148,45 @@ const CourseRoster: React.FC = () => {
           Create assignment
         </Link>
       </div>
+
+      {/* Assignments for this course */}
+      <section className="mb-8">
+        <h2 className="font-display font-bold text-lg text-water-deep mb-3">Assignments</h2>
+        {assignmentsLoading ? (
+          <p className="text-base-content/70 text-sm">Loading assignments…</p>
+        ) : assignments.length === 0 ? (
+          <div className="rounded-blob border-2 border-water-foam/50 bg-base-100 p-4 shadow-sm">
+            <p className="text-base-content/70 text-sm">No assignments yet. Create one to get started.</p>
+          </div>
+        ) : (
+          <ul className="space-y-2">
+            {assignments.map((a) => {
+              const act = a.activity as { topic?: string; subtopic?: string; description?: string } | undefined;
+              const title = (a.title_override as string | undefined) || act?.description || `Assignment ${a.id.slice(0, 8)}`;
+              const due = a.due_date ? new Date(a.due_date).toLocaleDateString(undefined, { dateStyle: 'medium' }) : null;
+              const topicSub = [act?.topic, act?.subtopic].filter(Boolean).join(' · ') || null;
+              return (
+                <li key={a.id} className="flex flex-wrap items-center justify-between gap-2 rounded-blob border-2 border-water-foam/50 bg-base-100 p-3 shadow-sm">
+                  <div>
+                    <span className="font-medium text-water-deep">{title}</span>
+                    {topicSub && <span className="ml-2 text-sm text-base-content/70">{topicSub}</span>}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {due && <span className="text-sm text-base-content/70">Due {due}</span>}
+                    <Link
+                      to={`/teacher/courses/${courseId}/assignments/${a.id}`}
+                      state={{ courseName, assignmentTitle: title }}
+                      className="btn btn-ghost btn-sm rounded-bubble text-primary"
+                    >
+                      View progress
+                    </Link>
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </section>
 
       <div className="flex flex-wrap gap-2 items-center mb-6">
         <span className="font-display font-semibold text-water-deep">Add student</span>

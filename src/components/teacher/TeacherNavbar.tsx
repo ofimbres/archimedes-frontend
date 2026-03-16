@@ -61,7 +61,7 @@ export default function TeacherNavbar() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           </label>
-          <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow-lg bg-base-100 rounded-box w-52">
+          <ul tabIndex={0} className="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow-lg">
             <li><Link to="/" onClick={() => setActiveItem('home')} className={activeItem === 'home' ? 'active' : ''}>Home</Link></li>
           </ul>
         </div>
@@ -90,7 +90,7 @@ export default function TeacherNavbar() {
           </label>
           <ul
             tabIndex={0}
-            className="dropdown-content menu p-2 shadow-lg bg-base-100 rounded-box w-52 z-[1] max-h-64 overflow-y-auto"
+            className="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow-lg max-h-64 overflow-y-auto"
             onBlur={(e) => {
               if (!e.currentTarget.contains(e.relatedTarget)) setCoursesDropdownOpen(false);
             }}
@@ -124,7 +124,7 @@ export default function TeacherNavbar() {
             {fullName}
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
           </label>
-          <ul tabIndex={0} className="dropdown-content menu p-2 shadow-lg bg-base-100 rounded-box w-64 z-[1]">
+          <ul tabIndex={0} className="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-64 p-2 shadow-lg">
             <li className="menu-title"><span className="text-base-content/70">Signed in as teacher</span></li>
             <li><button type="button" onClick={signOut}>Sign out</button></li>
           </ul>

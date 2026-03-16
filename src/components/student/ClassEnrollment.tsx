@@ -50,12 +50,12 @@ const ClassEnrollment: React.FC = () => {
 
   return (
     <div className="container max-w-3xl mx-auto px-4 py-8">
-      <h2 className="font-display font-bold text-xl text-water-deep mb-4">Enroll in a new period</h2>
+      <h2 className="font-display font-bold text-xl text-water-deep mb-4">Enroll in a new class</h2>
       <div className="flex flex-wrap gap-2 mb-8">
         <input
           type="text"
           className="input input-bordered rounded-bubble border-2 border-water-foam flex-1 min-w-[200px]"
-          placeholder="Enter period code"
+          placeholder="Enter class code"
           value={periodCode}
           onChange={(e) => setPeriodCode(e.target.value)}
         />
@@ -65,11 +65,11 @@ const ClassEnrollment: React.FC = () => {
           onClick={handleAdd}
           disabled={!periodCode.trim()}
         >
-          Add period
+          Add class
         </button>
       </div>
 
-      <h2 className="font-display font-bold text-xl text-water-deep mb-4">Your enrolled periods</h2>
+      <h2 className="font-display font-bold text-xl text-water-deep mb-4">Your classes</h2>
       {enrolledPeriods.length > 0 ? (
         <ul className="space-y-2">
           {enrolledPeriods.map((period) => (
@@ -78,8 +78,14 @@ const ClassEnrollment: React.FC = () => {
               className="flex justify-between items-center p-4 bg-base-100 rounded-blob border-2 border-water-foam/50 shadow-sm"
             >
               <div>
-                <span className="font-semibold text-water-deep">{period.code}</span>
-                {period.name && <span className="text-base-content/70 ml-2">— {period.name}</span>}
+                <span className="font-semibold text-water-deep">
+                  {period.name || 'Course'}
+                </span>
+                {period.code && (
+                  <span className="text-base-content/70 ml-2">
+                    — Code: {period.code}
+                  </span>
+                )}
               </div>
               <button
                 type="button"
@@ -94,7 +100,7 @@ const ClassEnrollment: React.FC = () => {
         </ul>
       ) : (
         <div className="alert alert-info rounded-bubble">
-          <span>You are not enrolled in any periods yet.</span>
+          <span>You are not enrolled in any classes yet.</span>
         </div>
       )}
 
