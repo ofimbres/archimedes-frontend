@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect, useCallback } from 'react';
+import React, { useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { AuthContext } from './AuthContext';
 import { getStudentPeriods } from '../libs/apiEndpoints';
 
@@ -8,11 +8,15 @@ export interface IPeriod {
   chosenPeriod?: any;
   setChosenPeriod?: any;
   refreshPeriods?: any;
+  /** When true, student shell (e.g. navbar) hides for full-screen embedded worksheet */
+  embeddedAssignmentOpen?: boolean;
+  setEmbeddedAssignmentOpen?: (open: boolean) => void;
 }
 
 const defaultState: IPeriod = {
   availablePeriods: [],
   chosenPeriod: null,
+  setEmbeddedAssignmentOpen: () => {},
 };
 
 type Props = {
@@ -24,6 +28,7 @@ export const StudentContext = React.createContext(defaultState);
 const StudentProvider = ({ children }: Props) => {
   const [chosenPeriod, setChosenPeriod] = useState(null);
   const [availablePeriods, setAvailablePeriods] = useState([]);
+  const [embeddedAssignmentOpen, setEmbeddedAssignmentOpen] = useState(false);
 
   const authContext = useContext(AuthContext);
 
@@ -62,14 +67,24 @@ const StudentProvider = ({ children }: Props) => {
     fetchClasses();
   }, [fetchClasses]);
 
-  const refreshPeriods = async () => {
+  const refreshPeriods = useCallback(async () => {
     await fetchClasses();
-  };
+  }, [fetchClasses]);
+
+  const contextValue = useMemo(
+    () => ({
+      chosenPeriod,
+      setChosenPeriod,
+      availablePeriods,
+      refreshPeriods,
+      embeddedAssignmentOpen,
+      setEmbeddedAssignmentOpen,
+    }),
+    [chosenPeriod, availablePeriods, refreshPeriods, embeddedAssignmentOpen]
+  );
 
   return (
-    <StudentContext.Provider
-      value={{ chosenPeriod, setChosenPeriod, availablePeriods, refreshPeriods }}
-    >
+    <StudentContext.Provider value={contextValue}>
       {children}
     </StudentContext.Provider>
   );

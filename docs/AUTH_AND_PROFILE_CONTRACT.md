@@ -276,6 +276,8 @@ with the **same** Bearer token (read from the hash) and JSON body `{ "student_id
 
 **CORS:** The API must allow the **miniquiz CDN origin** (e.g. CloudFront) in `Access-Control-Allow-Origin` (or equivalent env such as `CORS_ORIGINS`, comma-separated); otherwise the browser will block the completion `fetch`.
 
+**Embedding (iframe):** If the student app loads the worksheet in an `<iframe>`, the CDN response must **allow framing** (e.g. CSP `frame-ancestors` including the Archimedes app origin, or omit `X-Frame-Options: DENY` / `SAMEORIGIN` if inappropriate). Otherwise the iframe stays blank or the browser blocks it.
+
 **After submit:** The quiz tab does **not** `postMessage` the parent. When the student returns to the Archimedes tab, the app should **refetch** assignments (e.g. on `visibilitychange`) so `my_completed_at` / `my_score` update.
 
 **Frontend references:** `src/utils/assignmentLaunchUrl.ts` (`buildAssignmentLaunchUrl`, `withAccessTokenHash`, `getArchimedesApiOriginFromEnv`), `src/pages/student/Assignments.tsx`, `public/mini-quiz/m4u_extended.js` (deploy copy to your CDN). **ADR:** `docs/adr-005-miniquiz-completion-cors.md`.

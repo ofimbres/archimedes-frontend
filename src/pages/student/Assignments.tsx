@@ -1,6 +1,13 @@
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCalendarDay, faCalendarTimes, faCalendarCheck, faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
+import {
+  faCalendarDay,
+  faCalendarTimes,
+  faCalendarCheck,
+  faExternalLinkAlt,
+  faWindowMaximize,
+} from '@fortawesome/free-solid-svg-icons';
 import '@fortawesome/fontawesome-svg-core/styles.css';
 import { AuthContext } from '../../contexts/AuthContext';
 import { getAssignmentsByCourse, getAssignmentProgress, type Assignment, type AssignmentProgressRow } from '../../libs/apiEndpoints';
@@ -72,6 +79,8 @@ const Assignments: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshNonce, setRefreshNonce] = useState(0);
+  /** Full-page embedded miniquiz (same URL as new-tab launch, incl. hash token). */
+  const [embeddedFrame, setEmbeddedFrame] = useState<{ url: string; title: string } | null>(null);
 
   // Use the currently selected course from the navbar dropdown, if any
   const currentCourseId = useMemo(
@@ -147,6 +156,34 @@ const Assignments: React.FC = () => {
     return () => document.removeEventListener('visibilitychange', onVisibility);
   }, []);
 
+  useEffect(() => {
+    if (embeddedFrame) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => {
+        document.body.style.overflow = prev;
+      };
+    }
+    return undefined;
+  }, [embeddedFrame]);
+
+  useEffect(() => {
+    if (!embeddedFrame) return undefined;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setEmbeddedFrame(null);
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [embeddedFrame]);
+
+  const setEmbeddedAssignmentOpen = studentContext.setEmbeddedAssignmentOpen;
+  useEffect(() => {
+    setEmbeddedAssignmentOpen?.(Boolean(embeddedFrame));
+    return () => {
+      setEmbeddedAssignmentOpen?.(false);
+    };
+  }, [embeddedFrame, setEmbeddedAssignmentOpen]);
+
   const todayAssignments = assignments.filter((a) => resolveStudentAssignmentStatus(a) === 'pending');
   const pastDueAssignments = assignments.filter((a) => resolveStudentAssignmentStatus(a) === 'past_due');
   const completedAssignments = assignments.filter((a) => resolveStudentAssignmentStatus(a) === 'completed');
@@ -202,17 +239,27 @@ const Assignments: React.FC = () => {
                   </div>
                 )}
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 {launchUrl && (
-                  <a
-                    href={launchUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn btn-sm btn-primary gap-1 rounded-bubble"
-                  >
-                    <FontAwesomeIcon icon={faExternalLinkAlt} className="text-xs" />
-                    Open
-                  </a>
+                  <>
+                    <button
+                      type="button"
+                      className="btn btn-sm btn-outline border-water-mid text-water-deep gap-1 rounded-bubble"
+                      onClick={() => setEmbeddedFrame({ url: launchUrl, title })}
+                    >
+                      <FontAwesomeIcon icon={faWindowMaximize} className="text-xs" />
+                      Embed
+                    </button>
+                    <a
+                      href={launchUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-sm btn-primary gap-1 rounded-bubble"
+                    >
+                      <FontAwesomeIcon icon={faExternalLinkAlt} className="text-xs" />
+                      New tab
+                    </a>
+                  </>
                 )}
                 {status === 'completed' && score != null && (
                   <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-success/10 text-success text-sm font-semibold">
@@ -254,8 +301,8 @@ const Assignments: React.FC = () => {
       </p>
 
       <p className="text-center text-sm text-base-content/70 mb-6 max-w-xl mx-auto">
-        <strong>Open</strong> launches the miniquiz in a <strong>new tab</strong>. After you submit there, switch back here — your list refreshes when this tab becomes
-        visible again. The quiz submits directly to the API (CORS must allow your worksheet CDN origin).
+        <strong>Embed</strong> fills the screen (navbar hidden until you close). <strong>New tab</strong> opens the worksheet in a separate window. After submit, come back here — the list refreshes when this tab is visible again. The worksheet calls the API directly (CORS on the API + your CDN must allow{' '}
+        <strong>framing</strong> if you use Embed — set <code className="text-xs bg-base-200 px-1 rounded">frame-ancestors</code> / remove <code className="text-xs bg-base-200 px-1 rounded">X-Frame-Options: DENY</code> on CloudFront).
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -301,6 +348,47 @@ const Assignments: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {embeddedFrame &&
+        createPortal(
+          <div
+            className="fixed inset-0 z-[9999] flex flex-col bg-base-100"
+            role="dialog"
+            aria-modal="true"
+            aria-label={embeddedFrame.title}
+          >
+            <iframe
+              key={embeddedFrame.url}
+              src={embeddedFrame.url}
+              title={embeddedFrame.title}
+              className="h-full min-h-0 w-full flex-1 border-0 bg-white"
+              allow="fullscreen"
+            />
+            <div className="pointer-events-none absolute inset-x-0 top-0 flex justify-end gap-2 p-2 sm:p-3">
+              <div className="pointer-events-auto flex flex-wrap items-center justify-end gap-2 rounded-blob border border-base-300/80 bg-base-100/95 px-2 py-1.5 shadow-lg backdrop-blur-sm">
+                <span className="hidden max-w-[40vw] truncate text-xs font-medium text-water-deep sm:inline" title={embeddedFrame.title}>
+                  {embeddedFrame.title}
+                </span>
+                <a
+                  href={embeddedFrame.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-ghost btn-sm rounded-bubble"
+                >
+                  New tab
+                </a>
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm rounded-bubble"
+                  onClick={() => setEmbeddedFrame(null)}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+          </div>,
+          document.body
+        )}
     </div>
   );
 };

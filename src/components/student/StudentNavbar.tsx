@@ -40,6 +40,10 @@ export default function StudentNavbar() {
     return null;
   }
 
+  if (studentContext.embeddedAssignmentOpen) {
+    return null;
+  }
+
   return (
     <div className="navbar bg-base-100 border-b border-base-300 shadow-sm">
       <div className="navbar-start">
