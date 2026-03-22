@@ -1,16 +1,14 @@
 import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faCalendarDay,
   faCalendarTimes,
   faCalendarCheck,
   faExternalLinkAlt,
-  faWindowMaximize,
 } from '@fortawesome/free-solid-svg-icons';
 import '@fortawesome/fontawesome-svg-core/styles.css';
 import { AuthContext } from '../../contexts/AuthContext';
-import { getAssignmentsByCourse, getAssignmentProgress, type Assignment, type AssignmentProgressRow } from '../../libs/apiEndpoints';
+import { getAssignmentsByCourse, type Assignment, type AssignmentProgressRow } from '../../libs/apiEndpoints';
 import { StudentContext } from '../../contexts/StudentContext';
 import { buildAssignmentLaunchUrl, getArchimedesApiOriginFromEnv } from '../../utils/assignmentLaunchUrl';
 import type { StudentProfile } from '../../types/auth';
@@ -39,8 +37,31 @@ function isPastDueByDueDate(dueDateIso: string | undefined): boolean {
   return Date.now() > endOfDueDayUtc;
 }
 
-/** Backend sometimes returns my_completed_at / my_score on each assignment in the list */
+/** Backend: enrolled students get `completed` | `past_due` | `pending`; teachers/admins get null. */
+function formatStudentDisplayName(profile: StudentProfile | null | undefined): string {
+  if (!profile) return '';
+  const fromParts = `${profile.first_name ?? ''} ${profile.last_name ?? ''}`.trim();
+  if (fromParts !== '') return fromParts;
+  return String(profile.full_name ?? '').trim();
+}
+
+function parseMyStatus(
+  raw: string | null | undefined
+): 'pending' | 'past_due' | 'completed' | null {
+  if (raw == null || String(raw).trim() === '') return null;
+  const s = String(raw).trim().toLowerCase();
+  if (s === 'completed' || s === 'past_due' || s === 'pending') return s;
+  return null;
+}
+
+/**
+ * Prefer `my_status` from GET .../assignments/courses/{id} when set; otherwise infer from
+ * `my_completed_at` / `_progress` and due date (other callers or older backends).
+ */
 function resolveStudentAssignmentStatus(a: DecoratedAssignment): 'pending' | 'past_due' | 'completed' {
+  const fromApi = parseMyStatus((a as Assignment).my_status);
+  if (fromApi != null) return fromApi;
+
   const row = a._progress;
   if (row?.status === 'completed') return 'completed';
   const mine = a as { my_completed_at?: string | null };
@@ -51,7 +72,6 @@ function resolveStudentAssignmentStatus(a: DecoratedAssignment): 'pending' | 'pa
   const due = a.due_date;
   const overdueByCalendar = isPastDueByDueDate(due);
 
-  // API can say past_due too early; trust the due date when we have one
   if (row?.status === 'past_due') {
     if (due != null && String(due).trim() !== '' && !overdueByCalendar) {
       return 'pending';
@@ -59,7 +79,6 @@ function resolveStudentAssignmentStatus(a: DecoratedAssignment): 'pending' | 'pa
     return 'past_due';
   }
 
-  // pending / no row — still show as past due if the due date has passed
   if (overdueByCalendar) return 'past_due';
   return 'pending';
 }
@@ -79,8 +98,6 @@ const Assignments: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshNonce, setRefreshNonce] = useState(0);
-  /** Full-page embedded miniquiz (same URL as new-tab launch, incl. hash token). */
-  const [embeddedFrame, setEmbeddedFrame] = useState<{ url: string; title: string } | null>(null);
 
   // Use the currently selected course from the navbar dropdown, if any
   const currentCourseId = useMemo(
@@ -105,31 +122,33 @@ const Assignments: React.FC = () => {
 
       const list = await getAssignmentsByCourse(currentCourseId, accessToken, idToken);
 
-      const withProgress: DecoratedAssignment[] = await Promise.all(
-        (list ?? []).map(async (a) => {
-          let myRow: AssignmentProgressRow | null = null;
-          try {
-            const rows = await getAssignmentProgress(a.id, accessToken, idToken);
-            myRow = rows.find((r) => r.student_id === studentId) ?? null;
-          } catch {
-            /* progress endpoint optional; list payload may still have my_* fields */
-          }
-          const mine = a as { my_completed_at?: string | null; my_score?: number | null };
-          if (
-            !myRow &&
-            mine.my_completed_at != null &&
-            String(mine.my_completed_at).trim() !== ''
-          ) {
-            myRow = {
-              student_id: studentId,
-              status: 'completed',
-              score: mine.my_score ?? null,
-              completed_at: mine.my_completed_at,
-            };
-          }
-          return { ...a, _progress: myRow };
-        })
-      );
+      // Do not call GET .../assignments/{id}/progress here — backend is teacher/admin-only.
+      // Use `my_status`, `my_completed_at`, `my_score` from the list (student rows).
+      const withProgress: DecoratedAssignment[] = (list ?? []).map((a) => {
+        const mine = a as Assignment;
+        const st = parseMyStatus(mine.my_status);
+        let myRow: AssignmentProgressRow | null = null;
+        const completedAtRaw =
+          mine.my_completed_at != null && String(mine.my_completed_at).trim() !== ''
+            ? String(mine.my_completed_at).trim()
+            : null;
+        if (completedAtRaw != null || st === 'completed') {
+          myRow = {
+            student_id: studentId,
+            status: 'completed',
+            score: mine.my_score ?? null,
+            completed_at: completedAtRaw,
+          };
+        } else if (st === 'past_due' || st === 'pending') {
+          myRow = {
+            student_id: studentId,
+            status: st,
+            score: mine.my_score ?? null,
+            completed_at: null,
+          };
+        }
+        return { ...a, _progress: myRow };
+      });
 
       setAssignments(withProgress);
     } catch (e) {
@@ -155,34 +174,6 @@ const Assignments: React.FC = () => {
     document.addEventListener('visibilitychange', onVisibility);
     return () => document.removeEventListener('visibilitychange', onVisibility);
   }, []);
-
-  useEffect(() => {
-    if (embeddedFrame) {
-      const prev = document.body.style.overflow;
-      document.body.style.overflow = 'hidden';
-      return () => {
-        document.body.style.overflow = prev;
-      };
-    }
-    return undefined;
-  }, [embeddedFrame]);
-
-  useEffect(() => {
-    if (!embeddedFrame) return undefined;
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setEmbeddedFrame(null);
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [embeddedFrame]);
-
-  const setEmbeddedAssignmentOpen = studentContext.setEmbeddedAssignmentOpen;
-  useEffect(() => {
-    setEmbeddedAssignmentOpen?.(Boolean(embeddedFrame));
-    return () => {
-      setEmbeddedAssignmentOpen?.(false);
-    };
-  }, [embeddedFrame, setEmbeddedAssignmentOpen]);
 
   const todayAssignments = assignments.filter((a) => resolveStudentAssignmentStatus(a) === 'pending');
   const pastDueAssignments = assignments.filter((a) => resolveStudentAssignmentStatus(a) === 'past_due');
@@ -210,10 +201,12 @@ const Assignments: React.FC = () => {
 
           const sessionBearer = (idToken ?? accessToken ?? '').trim();
           const apiOrigin = getArchimedesApiOriginFromEnv();
+          const studentName = formatStudentDisplayName(studentProfile);
           const launchUrl =
             contentUrl && studentId && sessionBearer && apiOrigin
               ? buildAssignmentLaunchUrl(contentUrl, {
                   studentId,
+                  studentName: studentName || undefined,
                   assignmentId: a.id,
                   activityId,
                   sessionBearerToken: sessionBearer,
@@ -241,25 +234,15 @@ const Assignments: React.FC = () => {
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 {launchUrl && (
-                  <>
-                    <button
-                      type="button"
-                      className="btn btn-sm btn-outline border-water-mid text-water-deep gap-1 rounded-bubble"
-                      onClick={() => setEmbeddedFrame({ url: launchUrl, title })}
-                    >
-                      <FontAwesomeIcon icon={faWindowMaximize} className="text-xs" />
-                      Embed
-                    </button>
-                    <a
-                      href={launchUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn btn-sm btn-primary gap-1 rounded-bubble"
-                    >
-                      <FontAwesomeIcon icon={faExternalLinkAlt} className="text-xs" />
-                      New tab
-                    </a>
-                  </>
+                  <a
+                    href={launchUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-sm btn-primary gap-1 rounded-bubble"
+                  >
+                    <FontAwesomeIcon icon={faExternalLinkAlt} className="text-xs" />
+                    Open
+                  </a>
                 )}
                 {status === 'completed' && score != null && (
                   <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-success/10 text-success text-sm font-semibold">
@@ -298,11 +281,6 @@ const Assignments: React.FC = () => {
       <h1 className="font-display font-bold text-2xl text-water-deep text-center mb-2">Welcome back!</h1>
       <p className="text-center text-water-mid mb-8">
         Here&apos;s your activity overview for today.
-      </p>
-
-      <p className="text-center text-sm text-base-content/70 mb-6 max-w-xl mx-auto">
-        <strong>Embed</strong> fills the screen (navbar hidden until you close). <strong>New tab</strong> opens the worksheet in a separate window. After submit, come back here — the list refreshes when this tab is visible again. The worksheet calls the API directly (CORS on the API + your CDN must allow{' '}
-        <strong>framing</strong> if you use Embed — set <code className="text-xs bg-base-200 px-1 rounded">frame-ancestors</code> / remove <code className="text-xs bg-base-200 px-1 rounded">X-Frame-Options: DENY</code> on CloudFront).
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -348,47 +326,6 @@ const Assignments: React.FC = () => {
           </div>
         </div>
       </div>
-
-      {embeddedFrame &&
-        createPortal(
-          <div
-            className="fixed inset-0 z-[9999] flex flex-col bg-base-100"
-            role="dialog"
-            aria-modal="true"
-            aria-label={embeddedFrame.title}
-          >
-            <iframe
-              key={embeddedFrame.url}
-              src={embeddedFrame.url}
-              title={embeddedFrame.title}
-              className="h-full min-h-0 w-full flex-1 border-0 bg-white"
-              allow="fullscreen"
-            />
-            <div className="pointer-events-none absolute inset-x-0 top-0 flex justify-end gap-2 p-2 sm:p-3">
-              <div className="pointer-events-auto flex flex-wrap items-center justify-end gap-2 rounded-blob border border-base-300/80 bg-base-100/95 px-2 py-1.5 shadow-lg backdrop-blur-sm">
-                <span className="hidden max-w-[40vw] truncate text-xs font-medium text-water-deep sm:inline" title={embeddedFrame.title}>
-                  {embeddedFrame.title}
-                </span>
-                <a
-                  href={embeddedFrame.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="btn btn-ghost btn-sm rounded-bubble"
-                >
-                  New tab
-                </a>
-                <button
-                  type="button"
-                  className="btn btn-primary btn-sm rounded-bubble"
-                  onClick={() => setEmbeddedFrame(null)}
-                >
-                  Close
-                </button>
-              </div>
-            </div>
-          </div>,
-          document.body
-        )}
     </div>
   );
 };

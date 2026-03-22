@@ -33,6 +33,7 @@ function getLaunchParams() {
     archimedesApiBase: (sp.get('archimedes_api_base') || '').replace(/\/+$/, ''),
     assignmentId: sp.get('assignment_id') || '',
     studentId: sp.get('student_id') || '',
+    studentName: sp.get('student_name') || sp.get('studentName') || '',
   };
 }
 
@@ -122,7 +123,17 @@ function updateCellFields(event) {
   calculate(studentIdElement.id);
 }
 
+function prefillStudentFromQuery() {
+  var launch = getLaunchParams();
+  if (!launch.studentName) return;
+  var studentNameElement = document.querySelectorAll('[data-name-field]')[0];
+  if (studentNameElement) {
+    studentNameElement.textContent = launch.studentName;
+  }
+}
+
 function init() {
+  prefillStudentFromQuery();
   window.addEventListener('message', updateCellFields, false);
 }
 

@@ -16,7 +16,7 @@ Earlier options considered:
 ## Decision
 
 1. The **Archimedes SPA** builds the worksheet URL from `activity.content_url` and adds:
-   - **Query:** `assignment_id`, `student_id`, `archimedes_api_base`, optional `activity_id`.
+   - **Query:** `assignment_id`, `student_id`, optional `student_name`, `archimedes_api_base`, optional `activity_id`.
    - **Hash:** `#id_token=...` or `#access_token=...` (`encodeURIComponent`), never putting the JWT in the query string (so the CDN request does not carry the token).
 2. **`m4u_extended.js`** on the CDN reads the hash + query params and **`fetch`es** the completions endpoint with `Authorization: Bearer <same token>`.
 3. The **backend** allows the worksheet **origin** in **CORS** for that `POST`.

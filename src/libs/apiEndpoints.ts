@@ -386,6 +386,14 @@ export interface Assignment {
   due_date?: string;
   title_override?: string;
   activity?: AssignmentActivity;
+  /**
+   * When caller is an enrolled student, list payload includes these (avoid GET .../progress).
+   * `my_status`: `completed` | `past_due` | `pending` (aligned with teacher progress).
+   * Teachers/admins: `my_status` is null on every row.
+   */
+  my_completed_at?: string | null;
+  my_score?: number | null;
+  my_status?: 'pending' | 'past_due' | 'completed' | string | null;
   [key: string]: unknown;
 }
 

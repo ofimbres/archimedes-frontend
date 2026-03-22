@@ -10,6 +10,8 @@ export function getArchimedesApiOriginFromEnv(): string {
 
 export interface BuildAssignmentLaunchUrlParams {
   studentId: string;
+  /** Shown in worksheet UI when miniquiz reads `student_name` / `studentName` query params */
+  studentName?: string;
   assignmentId: string;
   /** Activity id (e.g. EX01); omitted from URL if empty */
   activityId: string;
@@ -43,6 +45,10 @@ export function buildAssignmentLaunchUrl(
   }
   url.searchParams.set('assignment_id', params.assignmentId);
   url.searchParams.set('student_id', params.studentId);
+  const studentName = params.studentName != null ? String(params.studentName).trim() : '';
+  if (studentName !== '') {
+    url.searchParams.set('student_name', studentName);
+  }
   if (params.activityId != null && String(params.activityId).trim() !== '') {
     url.searchParams.set('activity_id', String(params.activityId).trim());
   }

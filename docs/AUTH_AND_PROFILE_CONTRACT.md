@@ -231,7 +231,7 @@ UUIDs are strings; timestamps are ISO 8601. Frontend can rely on these fields fo
 
 - **POST /api/v1/assignments** – Create an assignment. Body: `course_id`, `activity_id`, `teacher_id` (from GET /auth/me `profile.id` when `user_type` is teachers), optional `due_date`, optional `title_override`.
 - **GET /api/v1/assignments/courses/{course_id}** – List assignments for a course (used by both teacher and student views).
-- **GET /api/v1/assignments/{assignment_id}/progress** – Returns per-student progress for one assignment (teacher view) and can be reused by the student view to decorate each assignment with that student’s status.
+- **GET /api/v1/assignments/{assignment_id}/progress** – Returns per-student progress for one assignment. **Teacher or admin only** in current backend; students must **not** rely on this endpoint (use list `my_*` fields below).
 
 **Assignment shape:** Each assignment includes a nested **activity** object (`activity_id`, `topic`, `subtopic`, `description`, optionally `content_url`). Use `content_url` directly for “Start” or `activity_id` with existing worksheet/session endpoints for student completion.
 
@@ -254,20 +254,18 @@ UUIDs are strings; timestamps are ISO 8601. Frontend can rely on these fields fo
   - `status === "pending"` → yellow badge (not done yet, not past due).
   - `status === "past_due"` → red badge (no completion and due date has passed).
 - **Student (Assignments page for a course):**
-  - Use `GET /assignments/courses/{course_id}` to list assignments.
-  - For each assignment, optionally call `GET /assignments/{assignment_id}/progress` and pick the row where `student_id === currentStudentId` to show that student’s status + score.
-- **Student list extras:** Each assignment row may include **`my_completed_at`** and **`my_score`** for the current student (no separate progress call required for completion display).
+  - Use **`GET /assignments/courses/{course_id}`** only. For an **enrolled student**, each row includes **`my_status`** (`completed` \| `past_due` \| `pending`), plus **`my_completed_at`** / **`my_score`** when applicable — same cases as before, aligned with teacher `GET .../progress` via shared backend logic. **Teachers/admins** get **`my_status`: null** on every row. The student app does **not** call `GET /assignments/{id}/progress` (teacher/admin only). The UI should **prefer `my_status` when non-null** and fall back to due-date / completion fields if a caller omits it.
 
 ### 5c. Student miniquiz launch & completion (CDN worksheet)
 
 **Auth (Archimedes app and miniquiz `fetch`):** Send `Authorization: Bearer <token>` on `/api/v1/...`. Prefer the **Cognito ID token** when available; the **access token** is also accepted (backend validates `aud` for ID tokens and `client_id` for access tokens).
 
-**List assignments:** `GET /api/v1/assignments/courses/{course_id}` with Bearer. Caller must be an enrolled student, the course teacher, or admin. Response includes nested `activity` with `activity_id`, `description`, `content_url` (when configured). For students, each row may include `my_completed_at` / `my_score`.
+**List assignments:** `GET /api/v1/assignments/courses/{course_id}` with Bearer. Caller must be an enrolled student, the course teacher, or admin. Response includes nested `activity` with `activity_id`, `description`, `content_url` (when configured). **Students** see `my_status`, `my_completed_at`, and `my_score` per row; **teachers/admins** see `my_status: null` on each row. Student UI should prefer `my_status` and must not call `GET .../progress`.
 
 **Launch URL (student app builds from `activity.content_url`):**
 
-- **`archimedes_api_base` source:** Must be a **full origin** the student’s browser can reach from the worksheet page (scheme + host + port, no path). In the SPA this comes from **`REACT_APP_BACKEND_API_ENDPOINT`** (normalized, e.g. `0.0.0.0` → `127.0.0.1`) via `getBackendApiOriginForMiniquizLaunch()` / `getArchimedesApiOriginFromEnv()` in `assignmentLaunchUrl.ts` — not from a relative `/api` path, so embedded or CDN-hosted miniquiz can still `fetch` the real API.
-- **Query string:** `assignment_id` (UUID), `student_id` (student profile UUID from `GET /auth/me`), `archimedes_api_base` (API origin only, e.g. `https://api.example.com` — no path, no trailing slash), optional `activity_id`.
+- **`archimedes_api_base` source:** Must be a **full origin** the student’s browser can reach from the worksheet page (scheme + host + port, no path). In the SPA this comes from **`REACT_APP_BACKEND_API_ENDPOINT`** (normalized, e.g. `0.0.0.0` → `127.0.0.1`) via `getBackendApiOriginForMiniquizLaunch()` / `getArchimedesApiOriginFromEnv()` in `assignmentLaunchUrl.ts` — not from a relative `/api` path, so the CDN-hosted miniquiz can still `fetch` the real API.
+- **Query string:** `assignment_id` (UUID), `student_id` (student profile UUID from `GET /auth/me`), optional `student_name` (display name for the worksheet UI), `archimedes_api_base` (API origin only, e.g. `https://api.example.com` — no path, no trailing slash), optional `activity_id`. Miniquiz may also read camelCase `studentName` if present.
 - **Fragment (hash), not query:** session token so it is not sent to the worksheet CDN on the initial request, e.g. `#id_token=<encodeURIComponent(id_token)>` or `#access_token=<encodeURIComponent(access_token)>`.
 - Open with `target="_blank"` and `rel="noopener noreferrer"`.
 
@@ -277,7 +275,7 @@ with the **same** Bearer token (read from the hash) and JSON body `{ "student_id
 
 **CORS:** The API must allow the **miniquiz CDN origin** (e.g. CloudFront) in `Access-Control-Allow-Origin` (or equivalent env such as `CORS_ORIGINS`, comma-separated); otherwise the browser will block the completion `fetch`.
 
-**Embedding (iframe):** If the student app loads the worksheet in an `<iframe>`, the CDN response must **allow framing** (e.g. CSP `frame-ancestors` including the Archimedes app origin, or omit `X-Frame-Options: DENY` / `SAMEORIGIN` if inappropriate). Otherwise the iframe stays blank or the browser blocks it.
+**Iframe (optional):** The default student UI opens the worksheet in a **new tab**. If a custom integration loads the worksheet in an `<iframe>`, the CDN response must **allow framing** (e.g. CSP `frame-ancestors` including the Archimedes app origin, or omit `X-Frame-Options: DENY` / `SAMEORIGIN` if inappropriate). Otherwise the iframe stays blank or the browser blocks it.
 
 **After submit:** The quiz tab does **not** `postMessage` the parent. When the student returns to the Archimedes tab, the app should **refetch** assignments (e.g. on `visibilitychange`) so `my_completed_at` / `my_score` update.
 
@@ -346,7 +344,7 @@ with the **same** Bearer token (read from the hash) and JSON body `{ "student_id
 | Get one activity | GET `/api/v1/activities/{activity_id}` | Activity detail |
 | Create assignment | POST `/api/v1/assignments` body `course_id`, `activity_id`, `teacher_id`, optional `due_date`, `title_override` | Teacher: assign activity to course |
 | List assignments for course | GET `/api/v1/assignments/courses/{course_id}` | Course assignments list (teacher and student views) |
-| Assignment progress (per student) | GET `/api/v1/assignments/{assignment_id}/progress` | Teacher: see completed/pending/past-due per student; student: derive own status per assignment |
+| Assignment progress (per student) | GET `/api/v1/assignments/{assignment_id}/progress` | Teacher/admin: roster-style progress. Student UI: use `my_*` fields on `GET .../assignments/courses/{course_id}` only |
 
 This contract is the source of truth for the frontend; backend implements it as in `app/routers/auth.py` and `app/schemas/auth.py`.
 
