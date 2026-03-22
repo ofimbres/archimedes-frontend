@@ -1,14 +1,15 @@
+import { BACKEND_API_BASE_URL } from './backendApiBaseUrl';
+
 /**
  * API origin only (scheme + host + port), no path — used as archimedes_api_base on miniquiz launch URLs.
  */
 export function getArchimedesApiOriginFromEnv(): string {
-  const raw = process.env.REACT_APP_BACKEND_API_ENDPOINT;
-  if (raw == null || String(raw).trim() === '') return '';
+  if (!BACKEND_API_BASE_URL) return '';
   try {
-    const u = new URL(raw);
+    const u = new URL(BACKEND_API_BASE_URL);
     return `${u.protocol}//${u.host}`;
   } catch {
-    return String(raw).replace(/\/+$/, '');
+    return BACKEND_API_BASE_URL.replace(/\/+$/, '');
   }
 }
 

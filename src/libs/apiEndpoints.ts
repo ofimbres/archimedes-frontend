@@ -1,4 +1,6 @@
-const API_BASE_URL = process.env.REACT_APP_BACKEND_API_ENDPOINT;
+import { BACKEND_API_BASE_URL } from '../utils/backendApiBaseUrl';
+
+const API_BASE_URL = BACKEND_API_BASE_URL;
 
 // API endpoint generators
 const API_ENDPOINTS = {

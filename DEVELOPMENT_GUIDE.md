@@ -167,7 +167,7 @@ npm run build:production
 ```
 
 ### Environment Variables
-- `REACT_APP_BACKEND_API_ENDPOINT`: API server URL
+- `REACT_APP_BACKEND_API_ENDPOINT`: API server URL (use `http://127.0.0.1:8001` or `http://localhost:8001` in the browser — **not** `http://0.0.0.0:8001`, which often causes `net::ERR_FAILED` and misleading CORS errors). The app normalizes `0.0.0.0` → `127.0.0.1` if present.
 - `REACT_APP_ENVIRONMENT`: Environment identifier
 
 ### Docker Support

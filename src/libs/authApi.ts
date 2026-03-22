@@ -5,8 +5,9 @@ import type {
   LoginResponse,
   CompleteProfileBody,
 } from '../types/auth';
+import { BACKEND_API_BASE_URL } from '../utils/backendApiBaseUrl';
 
-const API_BASE = process.env.REACT_APP_BACKEND_API_ENDPOINT;
+const API_BASE = BACKEND_API_BASE_URL;
 
 function jsonHeaders(): HeadersInit {
   return {

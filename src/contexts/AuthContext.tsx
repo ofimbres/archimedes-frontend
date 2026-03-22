@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext, useCallback } from 'react';
 import type { UserType, Profile, MeResponse } from '../types/auth';
 import * as authApi from '../libs/authApi';
+import { BACKEND_API_BASE_URL } from '../utils/backendApiBaseUrl';
 
 export enum AuthStatus {
   Loading,
@@ -181,7 +182,7 @@ const AuthProvider = ({ children }: Props) => {
     email: string,
     password: string
   ) {
-    const endpoint = process.env.REACT_APP_BACKEND_API_ENDPOINT;
+    const endpoint = BACKEND_API_BASE_URL;
     const res = await fetch(`${endpoint}/api/v1/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
@@ -228,7 +229,7 @@ const AuthProvider = ({ children }: Props) => {
   }
 
   async function verifyCode(username: string, code: string) {
-    const endpoint = process.env.REACT_APP_BACKEND_API_ENDPOINT;
+    const endpoint = BACKEND_API_BASE_URL;
     const res = await fetch(`${endpoint}/api/v1/auth/verify-code`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
@@ -258,7 +259,7 @@ const AuthProvider = ({ children }: Props) => {
 
   async function getAttributes() {
     const username = localStorage.getItem(STORAGE_USERNAME);
-    const endpoint = process.env.REACT_APP_BACKEND_API_ENDPOINT;
+    const endpoint = BACKEND_API_BASE_URL;
     if (!username || !endpoint) return [];
     const res = await fetch(`${endpoint}/api/v1/auth/${username}/attributes`, {
       headers: { Accept: 'application/json' },
@@ -276,7 +277,7 @@ const AuthProvider = ({ children }: Props) => {
     _code?: string,
     _newPassword?: string
   ): Promise<string> {
-    const endpoint = process.env.REACT_APP_BACKEND_API_ENDPOINT;
+    const endpoint = BACKEND_API_BASE_URL;
     const res = await fetch(`${endpoint}/api/v1/auth/forgot-password`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
