@@ -260,7 +260,7 @@ const AuthProvider = ({ children }: Props) => {
   async function getAttributes() {
     const username = localStorage.getItem(STORAGE_USERNAME);
     const endpoint = BACKEND_API_BASE_URL;
-    if (!username || !endpoint) return [];
+    if (!username) return [];
     const res = await fetch(`${endpoint}/api/v1/auth/${username}/attributes`, {
       headers: { Accept: 'application/json' },
     });

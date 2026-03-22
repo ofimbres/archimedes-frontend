@@ -1,25 +1,48 @@
 /**
- * Normalize backend base URL for browser `fetch`.
- * `0.0.0.0` is a bind address, not a reliable client target — Chrome often fails with net::ERR_FAILED
- * and misleading CORS/preflight errors. Use 127.0.0.1 (or localhost) instead.
+ * Base URL for backend API calls from the browser.
+ *
+ * Uses `REACT_APP_BACKEND_API_ENDPOINT`, or same-origin when unset (paths in code are `/api/v1/...`).
+ *
+ * For miniquiz / iframe launch URLs, use `getBackendApiOriginForMiniquizLaunch()` so
+ * `archimedes_api_base` is always a full URL the iframe can reach.
  */
-export function normalizeBackendApiBaseUrl(raw: string | undefined): string {
-  const s = raw == null ? '' : String(raw).trim();
-  if (!s) return '';
+
+const raw = (process.env.REACT_APP_BACKEND_API_ENDPOINT || "").trim();
+
+function normalizeHostInUrl(urlString: string): string {
   try {
-    const u = new URL(s);
-    if (u.hostname === '0.0.0.0') {
-      u.hostname = '127.0.0.1';
+    const u = new URL(urlString);
+    if (u.hostname === "0.0.0.0") {
+      u.hostname = "127.0.0.1";
     }
-    const path = u.pathname.replace(/\/+$/, '');
-    const base = `${u.protocol}//${u.host}${path === '/' ? '' : path}`;
-    return base.replace(/\/+$/, '');
+    return u.toString().replace(/\/$/, "");
   } catch {
-    return s.replace(/0\.0\.0\.0/g, '127.0.0.1').replace(/\/+$/, '');
+    return urlString.replace(/\/$/, "");
   }
 }
 
-/** Single source for API base (env at build time, normalized for the browser). */
-export const BACKEND_API_BASE_URL = normalizeBackendApiBaseUrl(
-  process.env.REACT_APP_BACKEND_API_ENDPOINT
-);
+/** Origin only (scheme + host + port), no path — for miniquiz `archimedes_api_base`. */
+export function getBackendApiOriginForMiniquizLaunch(): string {
+  if (!raw) {
+    if (typeof window !== "undefined" && window.location?.origin) {
+      return window.location.origin;
+    }
+    return "";
+  }
+  try {
+    const u = new URL(normalizeHostInUrl(raw));
+    if (u.hostname === "0.0.0.0") u.hostname = "127.0.0.1";
+    return u.origin;
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * Base for fetch/axios. Paths in `apiEndpoints` are `${BASE}/api/v1/...`.
+ */
+export const BACKEND_API_BASE_URL = raw
+  ? normalizeHostInUrl(raw)
+  : typeof window !== "undefined" && window.location?.origin
+    ? window.location.origin
+    : "";

@@ -1,16 +1,11 @@
-import { BACKEND_API_BASE_URL } from './backendApiBaseUrl';
+import { getBackendApiOriginForMiniquizLaunch } from './backendApiBaseUrl';
 
 /**
  * API origin only (scheme + host + port), no path — used as archimedes_api_base on miniquiz launch URLs.
+ * Uses env backend URL even when dev API proxy is on (iframes need a real reachable origin).
  */
 export function getArchimedesApiOriginFromEnv(): string {
-  if (!BACKEND_API_BASE_URL) return '';
-  try {
-    const u = new URL(BACKEND_API_BASE_URL);
-    return `${u.protocol}//${u.host}`;
-  } catch {
-    return BACKEND_API_BASE_URL.replace(/\/+$/, '');
-  }
+  return getBackendApiOriginForMiniquizLaunch();
 }
 
 export interface BuildAssignmentLaunchUrlParams {
@@ -40,7 +35,6 @@ export function buildAssignmentLaunchUrl(
 ): string {
   const base =
     typeof window !== 'undefined' ? window.location.href : 'https://localhost/';
-  debugger;
   const url = new URL(contentUrl, base);
 
   const apiBase = (params.archimedesApiBase ?? getArchimedesApiOriginFromEnv()).replace(/\/+$/, '');

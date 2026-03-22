@@ -31,7 +31,7 @@ import {
 } from './pages/auth';
 
 // Component imports using barrel exports
-import { StudentNavbar, ClassEnrollment } from './components/student';
+import { StudentNavbar, ClassEnrollment, AssignmentPlayer } from './components/student';
 import TeacherNavbar from './components/teacher/TeacherNavbar';
 
 // Common components
@@ -80,6 +80,7 @@ const App: React.FC = () => {
                     <Route path="/" element={<StudentAssignments />} />
                     <Route path="/assignments" element={<Navigate to="/" replace />} />
                     <Route path="/enroll-period" element={<ClassEnrollment />} />
+                    <Route path="/assignment/play" element={<AssignmentPlayer />} />
                   </Routes>
                 </StudentProvider>
               </div>

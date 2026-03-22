@@ -55,11 +55,6 @@ function getHeaders(accessToken: string, idToken?: string | null): HeadersInit {
   return {
     'Content-Type': 'application/json',
     Accept: 'application/json',
-    'Access-Control-Allow-Origin': 'http://localhost:3000',
-    'Access-Control-Allow-Methods': 'GET, POST, PATCH, DELETE, PUT, OPTIONS',
-    'Access-Control-Allow-Headers':
-      'Origin, Content-Type, Access-Control-Allow-Headers, Access-Control-Allow-Origin, X-Requested-With',
-    'Access-Control-Allow-Credentials': 'true',
     Authorization: `Bearer ${bearerForApi(accessToken, idToken)}`,
   };
 }
