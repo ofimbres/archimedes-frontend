@@ -38,9 +38,18 @@ const API_ENDPOINTS = {
 } as const;
 
 /**
+ * Bearer for `Authorization` on API v1. Prefer Cognito **ID token** when present — access tokens
+ * often omit the `aud` claim; backends validating JWT may return MissingRequiredClaimError.
+ */
+function bearerForApi(accessToken: string, idToken?: string | null): string {
+  if (idToken != null && String(idToken).trim() !== '') return String(idToken).trim();
+  return accessToken;
+}
+
+/**
  * Creates headers for API requests with authentication
  */
-function getHeaders(accessToken: string): HeadersInit {
+function getHeaders(accessToken: string, idToken?: string | null): HeadersInit {
   return {
     'Content-Type': 'application/json',
     Accept: 'application/json',
@@ -49,7 +58,7 @@ function getHeaders(accessToken: string): HeadersInit {
     'Access-Control-Allow-Headers':
       'Origin, Content-Type, Access-Control-Allow-Headers, Access-Control-Allow-Origin, X-Requested-With',
     'Access-Control-Allow-Credentials': 'true',
-    Authorization: `Bearer ${accessToken}`,
+    Authorization: `Bearer ${bearerForApi(accessToken, idToken)}`,
   };
 }
 
@@ -60,7 +69,8 @@ function getHeaders(accessToken: string): HeadersInit {
 export async function postStudentEnrollment(
   studentId: string,
   joinCode: string,
-  accessToken: string
+  accessToken: string,
+  idToken?: string | null
 ): Promise<string> {
   try {
     // Backend contract: student_id is a query parameter, body only includes join_code
@@ -69,7 +79,7 @@ export async function postStudentEnrollment(
 
     const response = await fetch(url.toString(), {
       method: 'POST',
-      headers: getHeaders(accessToken),
+      headers: getHeaders(accessToken, idToken),
       body: JSON.stringify({
         join_code: joinCode,
       }),
@@ -87,12 +97,13 @@ export async function postStudentEnrollment(
 export async function deleteStudentEnrollment(
   studentId: string,
   periodId: string,
-  accessToken: string
+  accessToken: string,
+  idToken?: string | null
 ): Promise<string> {
   try {
     const response = await fetch(API_ENDPOINTS.DELETE_STUDENT_ENROLLMENT(studentId, periodId), {
       method: 'DELETE',
-      headers: getHeaders(accessToken),
+      headers: getHeaders(accessToken, idToken),
     });
     return await response.text();
   } catch (err) {
@@ -110,7 +121,8 @@ export async function getActivityResults(
   periodId: string,
   studentId: string,
   score: number,
-  accessToken: string
+  accessToken: string,
+  idToken?: string | null
 ): Promise<string> {
   const body = JSON.stringify({
     worksheetContentCopy,
@@ -123,7 +135,7 @@ export async function getActivityResults(
   try {
     const response = await fetch(API_ENDPOINTS.GET_ACTIVITY_RESULTS(), {
       method: 'POST',
-      headers: getHeaders(accessToken),
+      headers: getHeaders(accessToken, idToken),
       body,
     });
     return await response.text();
@@ -136,7 +148,11 @@ export async function getActivityResults(
 /**
  * Gets periods for a student. Returns empty array on 404 (e.g. endpoint not yet available or no periods).
  */
-export async function getStudentPeriods(studentId: string, accessToken: string): Promise<any> {
+export async function getStudentPeriods(
+  studentId: string,
+  accessToken: string,
+  idToken?: string | null
+): Promise<any> {
   try {
     const baseUrl = API_ENDPOINTS.GET_STUDENT_PERIODS(studentId);
     const url = new URL(baseUrl);
@@ -145,7 +161,7 @@ export async function getStudentPeriods(studentId: string, accessToken: string):
     url.searchParams.set('size', '50');
 
     const response = await fetch(url.toString(), {
-      headers: getHeaders(accessToken),
+      headers: getHeaders(accessToken, idToken),
     });
     if (response.status === 404 || !response.ok) {
       return [];
@@ -252,10 +268,11 @@ export interface CourseEnrollmentsResponse {
  */
 export async function getTeacherCourses(
   teacherId: string,
-  accessToken: string
+  accessToken: string,
+  idToken?: string | null
 ): Promise<TeacherCoursesResponse> {
   const response = await fetch(API_ENDPOINTS.GET_TEACHER_COURSES(teacherId), {
-    headers: getHeaders(accessToken),
+    headers: getHeaders(accessToken, idToken),
   });
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
@@ -275,10 +292,11 @@ export async function getTeacherCourses(
  */
 export async function getCourseEnrollments(
   courseId: string,
-  accessToken: string
+  accessToken: string,
+  idToken?: string | null
 ): Promise<CourseEnrollmentsResponse> {
   const response = await fetch(API_ENDPOINTS.GET_COURSE_ENROLLMENTS(courseId), {
-    headers: getHeaders(accessToken),
+    headers: getHeaders(accessToken, idToken),
   });
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
@@ -310,11 +328,12 @@ export class CourseLimitError extends Error {
  */
 export async function createCourse(
   body: CreateCourseBody,
-  accessToken: string
+  accessToken: string,
+  idToken?: string | null
 ): Promise<TeacherCourse> {
   const response = await fetch(API_ENDPOINTS.POST_COURSE(), {
     method: 'POST',
-    headers: getHeaders(accessToken),
+    headers: getHeaders(accessToken, idToken),
     body: JSON.stringify(body),
   });
   if (!response.ok) {
@@ -352,6 +371,8 @@ export interface Activity {
 /** Nested activity inside an assignment */
 export interface AssignmentActivity {
   activity_id: string;
+  /** Hosted worksheet / miniquiz URL (S3, CloudFront, etc.) */
+  content_url?: string;
   topic?: string;
   subtopic?: string;
   description?: string;
@@ -410,10 +431,11 @@ export interface PostCompletionBody {
 /** Progress summary: GET /api/v1/assignments/{id}/progress */
 export async function getAssignmentProgress(
   assignmentId: string,
-  accessToken: string
+  accessToken: string,
+  idToken?: string | null
 ): Promise<AssignmentProgressRow[]> {
   const response = await fetch(API_ENDPOINTS.GET_ASSIGNMENT_PROGRESS(assignmentId), {
-    headers: getHeaders(accessToken),
+    headers: getHeaders(accessToken, idToken),
   });
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
@@ -447,9 +469,12 @@ export async function getAssignmentProgress(
   return [];
 }
 
-export async function getActivitiesTopics(accessToken: string): Promise<ActivityTopicOption[]> {
+export async function getActivitiesTopics(
+  accessToken: string,
+  idToken?: string | null
+): Promise<ActivityTopicOption[]> {
   const response = await fetch(API_ENDPOINTS.GET_ACTIVITIES_TOPICS(), {
-    headers: getHeaders(accessToken),
+    headers: getHeaders(accessToken, idToken),
   });
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
@@ -461,10 +486,11 @@ export async function getActivitiesTopics(accessToken: string): Promise<Activity
 
 export async function getActivities(
   params: { topic?: string; subtopic?: string; activity_type?: string } | undefined,
-  accessToken: string
+  accessToken: string,
+  idToken?: string | null
 ): Promise<Activity[]> {
   const response = await fetch(API_ENDPOINTS.GET_ACTIVITIES(params), {
-    headers: getHeaders(accessToken),
+    headers: getHeaders(accessToken, idToken),
   });
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
@@ -474,9 +500,13 @@ export async function getActivities(
   return Array.isArray(data) ? data : data?.items ?? data?.activities ?? [];
 }
 
-export async function getActivity(activityId: string, accessToken: string): Promise<Activity> {
+export async function getActivity(
+  activityId: string,
+  accessToken: string,
+  idToken?: string | null
+): Promise<Activity> {
   const response = await fetch(API_ENDPOINTS.GET_ACTIVITY(activityId), {
-    headers: getHeaders(accessToken),
+    headers: getHeaders(accessToken, idToken),
   });
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
@@ -487,11 +517,12 @@ export async function getActivity(activityId: string, accessToken: string): Prom
 
 export async function createAssignment(
   body: CreateAssignmentBody,
-  accessToken: string
+  accessToken: string,
+  idToken?: string | null
 ): Promise<Assignment> {
   const response = await fetch(API_ENDPOINTS.POST_ASSIGNMENT(), {
     method: 'POST',
-    headers: getHeaders(accessToken),
+    headers: getHeaders(accessToken, idToken),
     body: JSON.stringify(body),
   });
   if (!response.ok) {
@@ -503,10 +534,11 @@ export async function createAssignment(
 
 export async function getAssignmentsByCourse(
   courseId: string,
-  accessToken: string
+  accessToken: string,
+  idToken?: string | null
 ): Promise<Assignment[]> {
   const response = await fetch(API_ENDPOINTS.GET_ASSIGNMENTS_BY_COURSE(courseId), {
-    headers: getHeaders(accessToken),
+    headers: getHeaders(accessToken, idToken),
   });
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
@@ -520,10 +552,11 @@ export async function getAssignmentsByCourse(
 export async function getTeacherCourseAssignments(
   teacherId: string,
   courseId: string,
-  accessToken: string
+  accessToken: string,
+  idToken?: string | null
 ): Promise<Assignment[]> {
   const response = await fetch(API_ENDPOINTS.GET_TEACHER_COURSE_ASSIGNMENTS(teacherId, courseId), {
-    headers: getHeaders(accessToken),
+    headers: getHeaders(accessToken, idToken),
   });
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
@@ -536,10 +569,11 @@ export async function getTeacherCourseAssignments(
 /** Completions for an assignment (who finished, when, score) */
 export async function getAssignmentCompletions(
   assignmentId: string,
-  accessToken: string
+  accessToken: string,
+  idToken?: string | null
 ): Promise<AssignmentCompletion[]> {
   const response = await fetch(API_ENDPOINTS.GET_ASSIGNMENT_COMPLETIONS(assignmentId), {
-    headers: getHeaders(accessToken),
+    headers: getHeaders(accessToken, idToken),
   });
   if (!response.ok) {
     const err = await response.json().catch(() => ({}));
@@ -553,11 +587,12 @@ export async function getAssignmentCompletions(
 export async function postAssignmentCompletion(
   assignmentId: string,
   body: PostCompletionBody,
-  accessToken: string
+  accessToken: string,
+  idToken?: string | null
 ): Promise<unknown> {
   const response = await fetch(API_ENDPOINTS.POST_ASSIGNMENT_COMPLETION(assignmentId), {
     method: 'POST',
-    headers: getHeaders(accessToken),
+    headers: getHeaders(accessToken, idToken),
     body: JSON.stringify(body),
   });
   if (!response.ok) {

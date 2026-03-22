@@ -256,6 +256,29 @@ UUIDs are strings; timestamps are ISO 8601. Frontend can rely on these fields fo
 - **Student (Assignments page for a course):**
   - Use `GET /assignments/courses/{course_id}` to list assignments.
   - For each assignment, optionally call `GET /assignments/{assignment_id}/progress` and pick the row where `student_id === currentStudentId` to show that student’s status + score.
+- **Student list extras:** Each assignment row may include **`my_completed_at`** and **`my_score`** for the current student (no separate progress call required for completion display).
+
+### 5c. Student miniquiz launch & completion (CDN worksheet)
+
+**Auth (Archimedes app and miniquiz `fetch`):** Send `Authorization: Bearer <token>` on `/api/v1/...`. Prefer the **Cognito ID token** when available; the **access token** is also accepted (backend validates `aud` for ID tokens and `client_id` for access tokens).
+
+**List assignments:** `GET /api/v1/assignments/courses/{course_id}` with Bearer. Caller must be an enrolled student, the course teacher, or admin. Response includes nested `activity` with `activity_id`, `description`, `content_url` (when configured). For students, each row may include `my_completed_at` / `my_score`.
+
+**Launch URL (student app builds from `activity.content_url`):**
+
+- **Query string:** `assignment_id` (UUID), `student_id` (student profile UUID from `GET /auth/me`), `archimedes_api_base` (API origin only, e.g. `https://api.example.com` — no path, no trailing slash), optional `activity_id`.
+- **Fragment (hash), not query:** session token so it is not sent to the worksheet CDN on the initial request, e.g. `#id_token=<encodeURIComponent(id_token)>` or `#access_token=<encodeURIComponent(access_token)>`.
+- Open with `target="_blank"` and `rel="noopener noreferrer"`.
+
+**Completion (static miniquiz + `m4u_extended.js` on CDN):** On submit, **POST** to  
+`{archimedes_api_base}/api/v1/assignments/{assignment_id}/completions`  
+with the **same** Bearer token (read from the hash) and JSON body `{ "student_id": "<uuid>", "score": <0–100, optional> }`. `student_id` must match the JWT-linked student. Endpoint is idempotent.
+
+**CORS:** The API must allow the **miniquiz CDN origin** (e.g. CloudFront) in `Access-Control-Allow-Origin` (or equivalent env such as `CORS_ORIGINS`, comma-separated); otherwise the browser will block the completion `fetch`.
+
+**After submit:** The quiz tab does **not** `postMessage` the parent. When the student returns to the Archimedes tab, the app should **refetch** assignments (e.g. on `visibilitychange`) so `my_completed_at` / `my_score` update.
+
+**Frontend references:** `src/utils/assignmentLaunchUrl.ts` (`buildAssignmentLaunchUrl`, `withAccessTokenHash`, `getArchimedesApiOriginFromEnv`), `src/pages/student/Assignments.tsx`, `public/mini-quiz/m4u_extended.js` (deploy copy to your CDN). **ADR:** `docs/adr-005-miniquiz-completion-cors.md`.
 
 ---
 
@@ -290,7 +313,8 @@ UUIDs are strings; timestamps are ISO 8601. Frontend can rely on these fields fo
 
 ## 8. CORS and callback URL
 
-- Backend should allow the frontend origin in CORS when calling `/api/v1/auth/*` and other APIs.
+- Backend should allow the **frontend** origin in CORS when calling `/api/v1/auth/*` and other APIs.
+- Backend should also allow **miniquiz / worksheet CDN origins** (see **§5c**) so students can `POST .../assignments/{id}/completions` from the hosted HTML page.
 - For Google sign-in, Cognito redirects to the **backend** callback URL (`{BACKEND_URL}/api/v1/auth/callback`). After the backend returns (HTML or JSON), the frontend can either:
   - Use a dedicated “post-login” page that reads tokens from the response (e.g. if backend returns HTML with tokens in a script or redirects to frontend with tokens in fragment/query), or
   - Have the backend return JSON and the callback URL point to the frontend with `?code=...` and have the frontend send the code to the backend to exchange for tokens (if you add such an endpoint). Current contract: callback is the backend URL; backend exchanges code and returns tokens (HTML or JSON).

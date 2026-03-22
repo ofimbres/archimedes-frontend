@@ -52,6 +52,7 @@ const CreateAssignment: React.FC = () => {
   const navigate = useNavigate();
   const authContext = useContext(AuthContext);
   const accessToken = authContext.sessionInfo?.accessToken;
+  const idToken = authContext.sessionInfo?.idToken;
   const courseName = (location.state as { courseName?: string } | null)?.courseName ?? 'Course';
 
   const teacherId =
@@ -85,25 +86,29 @@ const CreateAssignment: React.FC = () => {
       setTopicsLoading(false);
       return;
     }
-    getActivitiesTopics(accessToken)
+    getActivitiesTopics(accessToken, idToken)
       .then(setTopicOptions)
       .catch(() => setTopicOptions([]))
       .finally(() => setTopicsLoading(false));
-  }, [accessToken]);
+  }, [accessToken, idToken]);
 
   const searchByTopic = useCallback(() => {
     if (!accessToken) return;
     setSearchLoading(true);
     setActivities([]);
     setSelectedActivity(null);
-    getActivities({ topic: selectedTopic || undefined, subtopic: selectedSubtopic || undefined }, accessToken)
+    getActivities(
+      { topic: selectedTopic || undefined, subtopic: selectedSubtopic || undefined },
+      accessToken,
+      idToken
+    )
       .then((list) => {
         setActivities(list);
         if (list.length === 1) setSelectedActivity(list[0]);
       })
       .catch(() => setActivities([]))
       .finally(() => setSearchLoading(false));
-  }, [accessToken, selectedTopic, selectedSubtopic]);
+  }, [accessToken, idToken, selectedTopic, selectedSubtopic]);
 
   const lookupById = useCallback(() => {
     const id = activityIdInput.trim();
@@ -111,14 +116,14 @@ const CreateAssignment: React.FC = () => {
     setLookupError(null);
     setLookupLoading(true);
     setSelectedActivity(null);
-    getActivity(id, accessToken)
+    getActivity(id, accessToken, idToken)
       .then((a) => setSelectedActivity(a))
       .catch((err) => {
         setLookupError(err instanceof Error ? err.message : 'Activity not found');
         setSelectedActivity(null);
       })
       .finally(() => setLookupLoading(false));
-  }, [accessToken, activityIdInput]);
+  }, [accessToken, idToken, activityIdInput]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -134,7 +139,8 @@ const CreateAssignment: React.FC = () => {
           due_date: dueDate.trim() || undefined,
           title_override: titleOverride.trim() || undefined,
         },
-        accessToken
+        accessToken,
+        idToken
       );
       navigate(`/teacher/courses/${courseId}/roster`, { state: { courseName } });
     } catch (err) {

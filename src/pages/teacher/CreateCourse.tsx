@@ -16,6 +16,7 @@ const CreateCourse: React.FC = () => {
   const authContext = useContext(AuthContext);
   const navigate = useNavigate();
   const accessToken = authContext.sessionInfo?.accessToken;
+  const idToken = authContext.sessionInfo?.idToken;
   const teacherId =
     authContext.sessionInfo?.user_type === 'teachers' &&
     authContext.sessionInfo?.profile &&
@@ -47,7 +48,7 @@ const CreateCourse: React.FC = () => {
       subject: 'General',
     };
     try {
-      await createCourse(body, accessToken);
+      await createCourse(body, accessToken, idToken);
       navigate('/');
     } catch (err) {
       if (err instanceof CourseLimitError) {

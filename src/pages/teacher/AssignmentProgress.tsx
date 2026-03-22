@@ -8,6 +8,7 @@ const AssignmentProgress: React.FC = () => {
   const location = useLocation();
   const authContext = useContext(AuthContext);
   const accessToken = authContext.sessionInfo?.accessToken;
+  const idToken = authContext.sessionInfo?.idToken;
   const courseName = (location.state as { courseName?: string } | null)?.courseName ?? 'Course';
   const assignmentTitle = (location.state as { assignmentTitle?: string } | null)?.assignmentTitle ?? 'Assignment';
 
@@ -22,11 +23,11 @@ const AssignmentProgress: React.FC = () => {
     }
     setLoading(true);
     setError(null);
-    getAssignmentProgress(assignmentId, accessToken)
+    getAssignmentProgress(assignmentId, accessToken, idToken)
       .then((list) => setRows(list ?? []))
       .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load assignment progress'))
       .finally(() => setLoading(false));
-  }, [assignmentId, accessToken]);
+  }, [assignmentId, accessToken, idToken]);
 
   if (!courseId || !assignmentId) {
     return (

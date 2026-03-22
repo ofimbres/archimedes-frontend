@@ -24,13 +24,14 @@ export default function TeacherNavbar() {
       ? (authContext.sessionInfo.profile as { id: string }).id
       : null;
   const accessToken = authContext.sessionInfo?.accessToken;
+  const idToken = authContext.sessionInfo?.idToken;
 
   useEffect(() => {
     if (!teacherId || !accessToken) return;
-    getTeacherCourses(teacherId, accessToken)
+    getTeacherCourses(teacherId, accessToken, idToken)
       .then((res) => setCourses(res.items ?? []))
       .catch(() => setCourses([]));
-  }, [teacherId, accessToken, location.pathname]);
+  }, [teacherId, accessToken, idToken, location.pathname]);
 
   const profile = authContext.sessionInfo?.profile as
     | { full_name?: string; first_name?: string; last_name?: string }

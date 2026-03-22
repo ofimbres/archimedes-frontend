@@ -22,6 +22,7 @@ const ManageCourses: React.FC = () => {
       ? (authContext.sessionInfo.profile as { id: string }).id
       : null;
   const accessToken = authContext.sessionInfo?.accessToken;
+  const idToken = authContext.sessionInfo?.idToken;
 
   useEffect(() => {
     if (!teacherId || !accessToken) {
@@ -31,7 +32,7 @@ const ManageCourses: React.FC = () => {
     let cancelled = false;
     setLoading(true);
     setError(null);
-    getTeacherCourses(teacherId, accessToken)
+    getTeacherCourses(teacherId, accessToken, idToken)
       .then((res: TeacherCoursesResponse) => {
         if (cancelled) return;
         setCourses(res.items ?? []);
@@ -44,7 +45,7 @@ const ManageCourses: React.FC = () => {
         if (!cancelled) setLoading(false);
       });
     return () => { cancelled = true; };
-  }, [teacherId, accessToken]);
+  }, [teacherId, accessToken, idToken]);
 
   const copyJoinCode = (course: TeacherCourse) => {
     if (!course.join_code) return;

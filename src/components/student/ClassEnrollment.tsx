@@ -26,7 +26,12 @@ const ClassEnrollment: React.FC = () => {
   const handleRemove = async (code: string): Promise<void> => {
     try {
       if (!studentId || !authContext.sessionInfo?.accessToken) return;
-      await deleteStudentEnrollment(studentId, code, authContext.sessionInfo.accessToken);
+      await deleteStudentEnrollment(
+        studentId,
+        code,
+        authContext.sessionInfo.accessToken,
+        authContext.sessionInfo.idToken
+      );
       studentContext.refreshPeriods();
     } catch (error) {
       console.error('Error removing enrollment:', error);
@@ -36,7 +41,12 @@ const ClassEnrollment: React.FC = () => {
   const handleAdd = async (): Promise<void> => {
     try {
       if (!studentId || !authContext.sessionInfo?.accessToken || !periodCode.trim()) return;
-      await postStudentEnrollment(studentId, periodCode, authContext.sessionInfo.accessToken);
+      await postStudentEnrollment(
+        studentId,
+        periodCode,
+        authContext.sessionInfo.accessToken,
+        authContext.sessionInfo.idToken
+      );
       studentContext.refreshPeriods();
       setPeriodCode('');
     } catch (error) {

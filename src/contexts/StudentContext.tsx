@@ -47,12 +47,16 @@ const StudentProvider = ({ children }: Props) => {
   const fetchClasses = useCallback(async () => {
     if (!studentId || !authContext.sessionInfo?.accessToken) return;
     try {
-      const data = await getStudentPeriods(studentId, authContext.sessionInfo.accessToken);
+      const data = await getStudentPeriods(
+        studentId,
+        authContext.sessionInfo.accessToken,
+        authContext.sessionInfo.idToken
+      );
       setAvailablePeriods(data);
     } catch (error) {
       console.error('Error fetching classes:', error);
     }
-  }, [authContext.sessionInfo?.accessToken, studentId]);
+  }, [authContext.sessionInfo?.accessToken, authContext.sessionInfo?.idToken, studentId]);
 
   useEffect(() => {
     fetchClasses();

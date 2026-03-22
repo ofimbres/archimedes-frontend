@@ -18,6 +18,7 @@ const CourseRoster: React.FC = () => {
   const location = useLocation();
   const authContext = useContext(AuthContext);
   const accessToken = authContext.sessionInfo?.accessToken;
+  const idToken = authContext.sessionInfo?.idToken;
   const courseName = (location.state as { courseName?: string } | null)?.courseName ?? 'Course';
   const teacherId =
     authContext.sessionInfo?.user_type === 'teachers' &&
@@ -40,11 +41,11 @@ const CourseRoster: React.FC = () => {
     if (!courseId || !accessToken) return;
     setLoading(true);
     setError(null);
-    getCourseEnrollments(courseId, accessToken)
+    getCourseEnrollments(courseId, accessToken, idToken)
       .then((res) => setEnrollments(res.items ?? res.enrollments ?? []))
       .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load roster'))
       .finally(() => setLoading(false));
-  }, [courseId, accessToken]);
+  }, [courseId, accessToken, idToken]);
 
   useEffect(() => {
     if (!courseId || !accessToken) {
@@ -72,7 +73,7 @@ const CourseRoster: React.FC = () => {
     if (!courseId || !accessToken || !window.confirm('Remove this student from the course?')) return;
     setRemovingId(studentId);
     try {
-      await deleteStudentEnrollment(studentId, courseId, accessToken);
+      await deleteStudentEnrollment(studentId, courseId, accessToken, idToken);
       setEnrollments((prev) => prev.filter((e) => e.student_id !== studentId));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to remove student');
@@ -87,7 +88,7 @@ const CourseRoster: React.FC = () => {
     setAddError(null);
     setAddLoading(true);
     try {
-      await postStudentEnrollment(id, courseId, accessToken);
+      await postStudentEnrollment(id, courseId, accessToken, idToken);
       setAddStudentId('');
       fetchRoster();
     } catch (err) {

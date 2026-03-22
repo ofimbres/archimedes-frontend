@@ -1,26 +1,77 @@
-import React, { useContext, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCalendarDay, faCalendarTimes, faCalendarCheck } from '@fortawesome/free-solid-svg-icons';
+import { faCalendarDay, faCalendarTimes, faCalendarCheck, faExternalLinkAlt } from '@fortawesome/free-solid-svg-icons';
 import '@fortawesome/fontawesome-svg-core/styles.css';
 import { AuthContext } from '../../contexts/AuthContext';
 import { getAssignmentsByCourse, getAssignmentProgress, type Assignment, type AssignmentProgressRow } from '../../libs/apiEndpoints';
 import { StudentContext } from '../../contexts/StudentContext';
+import { buildAssignmentLaunchUrl, getArchimedesApiOriginFromEnv } from '../../utils/assignmentLaunchUrl';
+import type { StudentProfile } from '../../types/auth';
 
 interface DecoratedAssignment extends Assignment {
   _progress?: AssignmentProgressRow | null;
+}
+
+/**
+ * True if current time is after the end of the due calendar day (UTC date parts from ISO string).
+ * Matches "due on Mar 21" as not past due until after Mar 21 23:59:59.999 UTC.
+ */
+function isPastDueByDueDate(dueDateIso: string | undefined): boolean {
+  if (dueDateIso == null || String(dueDateIso).trim() === '') return false;
+  const d = new Date(dueDateIso);
+  if (Number.isNaN(d.getTime())) return false;
+  const endOfDueDayUtc = Date.UTC(
+    d.getUTCFullYear(),
+    d.getUTCMonth(),
+    d.getUTCDate(),
+    23,
+    59,
+    59,
+    999
+  );
+  return Date.now() > endOfDueDayUtc;
+}
+
+/** Backend sometimes returns my_completed_at / my_score on each assignment in the list */
+function resolveStudentAssignmentStatus(a: DecoratedAssignment): 'pending' | 'past_due' | 'completed' {
+  const row = a._progress;
+  if (row?.status === 'completed') return 'completed';
+  const mine = a as { my_completed_at?: string | null };
+  if (mine.my_completed_at != null && String(mine.my_completed_at).trim() !== '') {
+    return 'completed';
+  }
+
+  const due = a.due_date;
+  const overdueByCalendar = isPastDueByDueDate(due);
+
+  // API can say past_due too early; trust the due date when we have one
+  if (row?.status === 'past_due') {
+    if (due != null && String(due).trim() !== '' && !overdueByCalendar) {
+      return 'pending';
+    }
+    return 'past_due';
+  }
+
+  // pending / no row — still show as past due if the due date has passed
+  if (overdueByCalendar) return 'past_due';
+  return 'pending';
 }
 
 const Assignments: React.FC = () => {
   const authContext = useContext(AuthContext);
   const studentContext = useContext(StudentContext);
   const accessToken = authContext.sessionInfo?.accessToken;
+  const idToken = authContext.sessionInfo?.idToken;
 
-  const studentProfile = authContext.sessionInfo?.profile as { id?: string } | undefined;
-  const studentId = authContext.sessionInfo?.user_type === 'students' ? studentProfile?.id : undefined;
-
+  const studentProfile =
+    authContext.sessionInfo?.user_type === 'students'
+      ? (authContext.sessionInfo?.profile as StudentProfile | null | undefined)
+      : undefined;
+  const studentId = studentProfile?.id;
   const [assignments, setAssignments] = useState<DecoratedAssignment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [refreshNonce, setRefreshNonce] = useState(0);
 
   // Use the currently selected course from the navbar dropdown, if any
   const currentCourseId = useMemo(
@@ -33,46 +84,72 @@ const Assignments: React.FC = () => {
     [studentContext.availablePeriods]
   );
 
-  useEffect(() => {
+  const loadAssignments = useCallback(async () => {
     if (!currentCourseId || !accessToken || !studentId) {
       setLoading(false);
       return;
     }
 
-    const load = async () => {
-      try {
-        setLoading(true);
-        setError(null);
+    try {
+      setLoading(true);
+      setError(null);
 
-        const list = await getAssignmentsByCourse(currentCourseId, accessToken);
+      const list = await getAssignmentsByCourse(currentCourseId, accessToken, idToken);
 
-        // For each assignment, fetch progress and pick the row for this student
-        const withProgress: DecoratedAssignment[] = await Promise.all(
-          (list ?? []).map(async (a) => {
-            try {
-              const rows = await getAssignmentProgress(a.id, accessToken);
-              const myRow = rows.find((r) => r.student_id === studentId) ?? null;
-              return { ...a, _progress: myRow };
-            } catch {
-              return { ...a, _progress: null };
-            }
-          })
-        );
+      const withProgress: DecoratedAssignment[] = await Promise.all(
+        (list ?? []).map(async (a) => {
+          let myRow: AssignmentProgressRow | null = null;
+          try {
+            const rows = await getAssignmentProgress(a.id, accessToken, idToken);
+            myRow = rows.find((r) => r.student_id === studentId) ?? null;
+          } catch {
+            /* progress endpoint optional; list payload may still have my_* fields */
+          }
+          const mine = a as { my_completed_at?: string | null; my_score?: number | null };
+          if (
+            !myRow &&
+            mine.my_completed_at != null &&
+            String(mine.my_completed_at).trim() !== ''
+          ) {
+            myRow = {
+              student_id: studentId,
+              status: 'completed',
+              score: mine.my_score ?? null,
+              completed_at: mine.my_completed_at,
+            };
+          }
+          return { ...a, _progress: myRow };
+        })
+      );
 
-        setAssignments(withProgress);
-      } catch (e) {
-        setError(e instanceof Error ? e.message : 'Failed to load assignments');
-      } finally {
-        setLoading(false);
+      setAssignments(withProgress);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to load assignments');
+    } finally {
+      setLoading(false);
+    }
+  }, [accessToken, idToken, currentCourseId, studentId]);
+
+  useEffect(() => {
+    void loadAssignments();
+  }, [loadAssignments, refreshNonce]);
+
+  const tabWasHiddenRef = useRef(document.visibilityState === 'hidden');
+  useEffect(() => {
+    const onVisibility = () => {
+      const hidden = document.visibilityState === 'hidden';
+      if (!hidden && tabWasHiddenRef.current) {
+        setRefreshNonce((n) => n + 1);
       }
+      tabWasHiddenRef.current = hidden;
     };
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => document.removeEventListener('visibilitychange', onVisibility);
+  }, []);
 
-    void load();
-  }, [accessToken, currentCourseId, studentId]);
-
-  const todayAssignments = assignments.filter((a) => a._progress?.status === 'pending');
-  const pastDueAssignments = assignments.filter((a) => a._progress?.status === 'past_due');
-  const completedAssignments = assignments.filter((a) => a._progress?.status === 'completed');
+  const todayAssignments = assignments.filter((a) => resolveStudentAssignmentStatus(a) === 'pending');
+  const pastDueAssignments = assignments.filter((a) => resolveStudentAssignmentStatus(a) === 'past_due');
+  const completedAssignments = assignments.filter((a) => resolveStudentAssignmentStatus(a) === 'completed');
 
   const renderAssignmentList = (items: DecoratedAssignment[]) => {
     if (items.length === 0) {
@@ -82,14 +159,30 @@ const Assignments: React.FC = () => {
     return (
       <ul className="space-y-2">
         {items.map((a) => {
-          const act = a.activity as { description?: string } | undefined;
+          const act = a.activity as { description?: string; content_url?: string } | undefined;
           const title = (a.title_override as string | undefined) || act?.description || 'Assignment';
+          const contentUrl = act?.content_url;
+          const activityId = a.activity_id;
           const due = a.due_date
             ? new Date(a.due_date).toLocaleDateString(undefined, { dateStyle: 'medium' })
             : null;
-          const status = a._progress?.status ?? 'pending';
-          const score = a._progress?.score ?? null;
+          const status = resolveStudentAssignmentStatus(a);
+          const mine = a as { my_score?: number | null };
+          const score = a._progress?.score ?? mine.my_score ?? null;
           const completedAt = a._progress?.completed_at ?? null;
+
+          const sessionBearer = (idToken ?? accessToken ?? '').trim();
+          const apiOrigin = getArchimedesApiOriginFromEnv();
+          const launchUrl =
+            contentUrl && studentId && sessionBearer && apiOrigin
+              ? buildAssignmentLaunchUrl(contentUrl, {
+                  studentId,
+                  assignmentId: a.id,
+                  activityId,
+                  sessionBearerToken: sessionBearer,
+                  hashUsesIdToken: Boolean(idToken?.trim()),
+                })
+              : null;
 
           return (
             <li
@@ -110,6 +203,17 @@ const Assignments: React.FC = () => {
                 )}
               </div>
               <div className="flex items-center gap-2">
+                {launchUrl && (
+                  <a
+                    href={launchUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn btn-sm btn-primary gap-1 rounded-bubble"
+                  >
+                    <FontAwesomeIcon icon={faExternalLinkAlt} className="text-xs" />
+                    Open
+                  </a>
+                )}
                 {status === 'completed' && score != null && (
                   <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-success/10 text-success text-sm font-semibold">
                     {score}
@@ -147,6 +251,11 @@ const Assignments: React.FC = () => {
       <h1 className="font-display font-bold text-2xl text-water-deep text-center mb-2">Welcome back!</h1>
       <p className="text-center text-water-mid mb-8">
         Here&apos;s your activity overview for today.
+      </p>
+
+      <p className="text-center text-sm text-base-content/70 mb-6 max-w-xl mx-auto">
+        <strong>Open</strong> launches the miniquiz in a <strong>new tab</strong>. After you submit there, switch back here — your list refreshes when this tab becomes
+        visible again. The quiz submits directly to the API (CORS must allow your worksheet CDN origin).
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
