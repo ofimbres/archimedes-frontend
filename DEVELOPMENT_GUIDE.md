@@ -170,6 +170,8 @@ npm run build:production
 - `REACT_APP_BACKEND_API_ENDPOINT`: API server URL (use `http://127.0.0.1:8001` or `http://localhost:8001` in the browser — **not** `http://0.0.0.0:8001`, which often causes `net::ERR_FAILED` and misleading CORS errors). The app normalizes `0.0.0.0` → `127.0.0.1` if present.
 - `REACT_APP_ENVIRONMENT`: Environment identifier
 
+**Local dev CORS:** The SPA (e.g. `http://localhost:3000`) calls the API directly. Ensure the backend allows that origin (and `http://127.0.0.1:3000` if you use it) and returns **200** on **OPTIONS** preflight. See `docs/adr-005-miniquiz-completion-cors.md` (worksheet CDN CORS is separate).
+
 ### Docker Support
 The project includes Docker configuration for containerized deployment.
 

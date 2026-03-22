@@ -266,6 +266,7 @@ UUIDs are strings; timestamps are ISO 8601. Frontend can rely on these fields fo
 
 **Launch URL (student app builds from `activity.content_url`):**
 
+- **`archimedes_api_base` source:** Must be a **full origin** the student’s browser can reach from the worksheet page (scheme + host + port, no path). In the SPA this comes from **`REACT_APP_BACKEND_API_ENDPOINT`** (normalized, e.g. `0.0.0.0` → `127.0.0.1`) via `getBackendApiOriginForMiniquizLaunch()` / `getArchimedesApiOriginFromEnv()` in `assignmentLaunchUrl.ts` — not from a relative `/api` path, so embedded or CDN-hosted miniquiz can still `fetch` the real API.
 - **Query string:** `assignment_id` (UUID), `student_id` (student profile UUID from `GET /auth/me`), `archimedes_api_base` (API origin only, e.g. `https://api.example.com` — no path, no trailing slash), optional `activity_id`.
 - **Fragment (hash), not query:** session token so it is not sent to the worksheet CDN on the initial request, e.g. `#id_token=<encodeURIComponent(id_token)>` or `#access_token=<encodeURIComponent(access_token)>`.
 - Open with `target="_blank"` and `rel="noopener noreferrer"`.
@@ -280,7 +281,7 @@ with the **same** Bearer token (read from the hash) and JSON body `{ "student_id
 
 **After submit:** The quiz tab does **not** `postMessage` the parent. When the student returns to the Archimedes tab, the app should **refetch** assignments (e.g. on `visibilitychange`) so `my_completed_at` / `my_score` update.
 
-**Frontend references:** `src/utils/assignmentLaunchUrl.ts` (`buildAssignmentLaunchUrl`, `withAccessTokenHash`, `getArchimedesApiOriginFromEnv`), `src/pages/student/Assignments.tsx`, `public/mini-quiz/m4u_extended.js` (deploy copy to your CDN). **ADR:** `docs/adr-005-miniquiz-completion-cors.md`.
+**Frontend references:** `src/utils/backendApiBaseUrl.ts` (`BACKEND_API_BASE_URL`, `getBackendApiOriginForMiniquizLaunch`), `src/utils/assignmentLaunchUrl.ts` (`buildAssignmentLaunchUrl`, `withAccessTokenHash`, `getArchimedesApiOriginFromEnv`), `src/pages/student/Assignments.tsx`, `public/mini-quiz/m4u_extended.js` (deploy copy to your CDN). Legacy route `/assignment/play` redirects via `src/components/student/AssignmentPlayer.tsx`. **ADR:** `docs/adr-005-miniquiz-completion-cors.md`.
 
 ---
 

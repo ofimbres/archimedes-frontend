@@ -25,10 +25,11 @@ Earlier options considered:
 ## Consequences
 
 - **CORS** must be configured for every worksheet origin (e.g. CloudFront URL).
+- **SPA ↔ API CORS:** The Archimedes web app calls the API from its own origin (e.g. `http://localhost:3000` in dev). The backend must allow that origin on `/api/v1/...` (including successful **OPTIONS** preflight) — this is separate from worksheet-origin CORS for `POST .../completions`.
 - **JWT in the hash** is visible in the address bar and to scripts on that page; mitigations are short token lifetime and HTTPS-only worksheet hosting.
-- **`REACT_APP_BACKEND_API_ENDPOINT`** must resolve to an **origin the student’s browser can reach** from the worksheet page (not e.g. `http://0.0.0.0:8001` if that is unreachable from the client).
+- **`REACT_APP_BACKEND_API_ENDPOINT`** must resolve to an **origin the student’s browser can reach** from the worksheet page (not e.g. `http://0.0.0.0:8001` if that is unreachable from the client). The SPA uses this value (via `getBackendApiOriginForMiniquizLaunch`) for `archimedes_api_base` on launch URLs.
 
 ## References
 
 - `docs/AUTH_AND_PROFILE_CONTRACT.md` §5c
-- `src/utils/assignmentLaunchUrl.ts`, `src/pages/student/Assignments.tsx`, `public/mini-quiz/m4u_extended.js`
+- `src/utils/backendApiBaseUrl.ts`, `src/utils/assignmentLaunchUrl.ts`, `src/pages/student/Assignments.tsx`, `public/mini-quiz/m4u_extended.js`
