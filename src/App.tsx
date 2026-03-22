@@ -2,7 +2,7 @@ import React from 'react';
 import './index.css';
 import './styles/index.css';
 
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 import AuthProvider, {
   AuthContext,
@@ -14,7 +14,7 @@ import AuthProvider, {
 import StudentProvider from './contexts/StudentContext';
 
 // Page imports using barrel exports
-import { Home as StudentHome, Assignments as StudentAssignments } from './pages/student';
+import { Assignments as StudentAssignments } from './pages/student';
 import Landing from './pages/Landing';
 import { Home as TeacherHome, CreateCourse, CourseRoster, ManageCourses, CreateAssignment } from './pages/teacher';
 import AssignmentProgress from './pages/teacher/AssignmentProgress';
@@ -83,8 +83,8 @@ const App: React.FC = () => {
                 <StudentProvider>
                   <StudentNavbar />
                   <Routes>
-                    <Route path="/" element={<StudentHome />} />
-                    <Route path="/assignments" element={<StudentAssignments />} />
+                    <Route path="/" element={<StudentAssignments />} />
+                    <Route path="/assignments" element={<Navigate to="/" replace />} />
                     <Route path="/enroll-period" element={<ClassEnrollment />} />
                     <Route path="/exercise/select" element={<ExerciseBrowser />} />
                     <Route path="/exercise/start" element={<ExercisePlayer />} />

@@ -227,12 +227,35 @@ UUIDs are strings; timestamps are ISO 8601. Frontend can rely on these fields fo
 - **GET /api/v1/activities?topic=...&subtopic=...** – Search activities by optional `topic` and `subtopic` query params.
 - **GET /api/v1/activities/{activity_id}** – Get one activity by ID.
 
-**Assignments (teacher):**
+**Assignments (teacher + student):**
 
 - **POST /api/v1/assignments** – Create an assignment. Body: `course_id`, `activity_id`, `teacher_id` (from GET /auth/me `profile.id` when `user_type` is teachers), optional `due_date`, optional `title_override`.
-- **GET /api/v1/assignments/courses/{course_id}** – List assignments for a course.
+- **GET /api/v1/assignments/courses/{course_id}** – List assignments for a course (used by both teacher and student views).
+- **GET /api/v1/assignments/{assignment_id}/progress** – Returns per-student progress for one assignment (teacher view) and can be reused by the student view to decorate each assignment with that student’s status.
 
-**Assignment shape:** Each assignment includes a nested **activity** object (`activity_id`, `topic`, `subtopic`, `description`). Use `activity_id` with existing worksheet/session endpoints for student completion.
+**Assignment shape:** Each assignment includes a nested **activity** object (`activity_id`, `topic`, `subtopic`, `description`, optionally `content_url`). Use `content_url` directly for “Start” or `activity_id` with existing worksheet/session endpoints for student completion.
+
+**Assignment progress shape (`GET /assignments/{id}/progress`):**
+
+- `assignment_id`: UUID of the assignment.
+- `course_id`: UUID of the course.
+- `students`: array of:
+  - `student_id`
+  - `student_name`
+  - `status`: `"completed"` \| `"pending"` \| `"past_due"`
+  - `score`: number \| null
+  - `completed_at`: ISO timestamp \| null
+- `total`: total number of students.
+
+**UI mapping:**
+
+- **Teacher (per-assignment progress screen):**
+  - `status === "completed"` → green badge, show score (in a square) and `completed_at`.
+  - `status === "pending"` → yellow badge (not done yet, not past due).
+  - `status === "past_due"` → red badge (no completion and due date has passed).
+- **Student (Assignments page for a course):**
+  - Use `GET /assignments/courses/{course_id}` to list assignments.
+  - For each assignment, optionally call `GET /assignments/{assignment_id}/progress` and pick the row where `student_id === currentStudentId` to show that student’s status + score.
 
 ---
 
@@ -295,7 +318,8 @@ UUIDs are strings; timestamps are ISO 8601. Frontend can rely on these fields fo
 | Search activities | GET `/api/v1/activities?topic=...&subtopic=...` | Filter activities by topic/subtopic |
 | Get one activity | GET `/api/v1/activities/{activity_id}` | Activity detail |
 | Create assignment | POST `/api/v1/assignments` body `course_id`, `activity_id`, `teacher_id`, optional `due_date`, `title_override` | Teacher: assign activity to course |
-| List assignments for course | GET `/api/v1/assignments/courses/{course_id}` | Course assignments list |
+| List assignments for course | GET `/api/v1/assignments/courses/{course_id}` | Course assignments list (teacher and student views) |
+| Assignment progress (per student) | GET `/api/v1/assignments/{assignment_id}/progress` | Teacher: see completed/pending/past-due per student; student: derive own status per assignment |
 
 This contract is the source of truth for the frontend; backend implements it as in `app/routers/auth.py` and `app/schemas/auth.py`.
 

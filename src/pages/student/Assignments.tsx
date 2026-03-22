@@ -144,9 +144,9 @@ const Assignments: React.FC = () => {
 
   return (
     <div className="container max-w-5xl mx-auto px-4 py-8">
-      <h1 className="font-display font-bold text-2xl text-water-deep text-center mb-2">Assignments</h1>
+      <h1 className="font-display font-bold text-2xl text-water-deep text-center mb-2">Welcome back!</h1>
       <p className="text-center text-water-mid mb-8">
-        Here&apos;s your activity overview for this course.
+        Here&apos;s your activity overview for today.
       </p>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
