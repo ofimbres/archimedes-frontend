@@ -1,4 +1,4 @@
-// Auth and profile types per docs/AUTH_AND_PROFILE_CONTRACT.md
+// Auth and profile types per docs/shared/contracts/auth-and-profile-contract.md
 
 export type UserType = 'students' | 'teachers' | 'admin' | null;
 

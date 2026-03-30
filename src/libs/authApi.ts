@@ -1,4 +1,4 @@
-// Auth API per docs/AUTH_AND_PROFILE_CONTRACT.md
+// Auth API per docs/shared/contracts/auth-and-profile-contract.md
 
 import type {
   MeResponse,
