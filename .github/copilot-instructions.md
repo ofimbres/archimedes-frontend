@@ -53,4 +53,4 @@ Copilot code output in this repo should support:
 
 - Fully working frontends for **production** or **demo purposes**
 - Maintainable **React components** using Tailwind + daisyUI
-- Scalable UI that stays consistent with the Archimedes design system (see `src/index.css` and `KID_FRIENDLY_DESIGN_SUMMARY.md`)
+- Scalable UI that stays consistent with the Archimedes design system (see `src/index.css` and `docs/shared/runbooks/archimedes-frontend-tailwind-ui.md`)

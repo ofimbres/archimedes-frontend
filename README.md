@@ -95,4 +95,4 @@ https://medium.com/@dantasfiles/three-methods-to-get-user-information-in-aws-amp
 
 📌 Note: This project uses GitHub Copilot with UI generation guidelines defined in [`.github/copilot-instructions.md`](./.github/copilot-instructions.md).
 
-**Styling:** Tailwind CSS v4 + daisyUI v5 (see [KID_FRIENDLY_DESIGN_SUMMARY.md](./KID_FRIENDLY_DESIGN_SUMMARY.md) and [DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md)).
+**Styling:** Tailwind CSS v4 + daisyUI v5 (see [docs/shared/runbooks/archimedes-frontend-tailwind-ui.md](./docs/shared/runbooks/archimedes-frontend-tailwind-ui.md) and [DEVELOPMENT_GUIDE.md](./DEVELOPMENT_GUIDE.md)).
