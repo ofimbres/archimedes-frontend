@@ -16,8 +16,16 @@ import StudentProvider from './contexts/StudentContext';
 // Page imports using barrel exports
 import { Assignments as StudentAssignments } from './pages/student';
 import Landing from './pages/Landing';
-import { Home as TeacherHome, CreateCourse, CourseRoster, ManageCourses, CreateAssignment } from './pages/teacher';
-import AssignmentProgress from './pages/teacher/AssignmentProgress';
+import {
+  Home as TeacherHome,
+  CreateCourse,
+  CourseRoster,
+  ManageCourses,
+  CreateAssignment,
+  AssignmentProgress,
+  ReportsByGroup,
+  ReportsByStudent,
+} from './pages/teacher';
 
 // Auth page imports using barrel exports
 import {
@@ -95,6 +103,8 @@ const App: React.FC = () => {
                 <Route path="/teacher/courses/new" element={<CreateCourse />} />
                 <Route path="/teacher/courses/:courseId/assignments/new" element={<CreateAssignment />} />
                 <Route path="/teacher/courses/:courseId/assignments/:assignmentId" element={<AssignmentProgress />} />
+                <Route path="/teacher/reports/by-group" element={<ReportsByGroup />} />
+                <Route path="/teacher/reports/by-student" element={<ReportsByStudent />} />
                 <Route path="/teacher/courses/:courseId/roster" element={<CourseRoster />} />
                 <Route path="/teacher/courses" element={<ManageCourses />} />
                 </Routes>

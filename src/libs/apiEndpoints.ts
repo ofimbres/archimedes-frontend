@@ -388,12 +388,12 @@ export interface Assignment {
   activity?: AssignmentActivity;
   /**
    * When caller is an enrolled student, list payload includes these (avoid GET .../progress).
-   * `my_status`: `completed` | `past_due` | `pending` (aligned with teacher progress).
+   * `my_status`: `completed` | `past_due` | `pending` | `late_completed` (aligned with teacher progress).
    * Teachers/admins: `my_status` is null on every row.
    */
   my_completed_at?: string | null;
   my_score?: number | null;
-  my_status?: 'pending' | 'past_due' | 'completed' | string | null;
+  my_status?: 'pending' | 'past_due' | 'completed' | 'late_completed' | string | null;
   [key: string]: unknown;
 }
 
@@ -421,10 +421,16 @@ export interface AssignmentCompletion {
 export interface AssignmentProgressRow {
   student_id: string;
   student_name?: string;
-  status: 'completed' | 'pending' | 'past_due' | string;
+  status: 'completed' | 'pending' | 'past_due' | 'late_completed' | string;
   score?: number | null;
+  passed?: boolean | null;
   completed_at?: string | null;
   [key: string]: unknown;
+}
+
+export interface AssignmentProgressFilters {
+  status?: string;
+  student_id?: string;
 }
 
 /** Body for POST /api/v1/assignments/{id}/completions */
@@ -437,9 +443,17 @@ export interface PostCompletionBody {
 export async function getAssignmentProgress(
   assignmentId: string,
   accessToken: string,
-  idToken?: string | null
+  idToken?: string | null,
+  filters?: AssignmentProgressFilters
 ): Promise<AssignmentProgressRow[]> {
-  const response = await fetch(API_ENDPOINTS.GET_ASSIGNMENT_PROGRESS(assignmentId), {
+  const url = new URL(API_ENDPOINTS.GET_ASSIGNMENT_PROGRESS(assignmentId));
+  if (filters?.status) {
+    url.searchParams.set('status', filters.status);
+  }
+  if (filters?.student_id) {
+    url.searchParams.set('student_id', filters.student_id);
+  }
+  const response = await fetch(url.toString(), {
     headers: getHeaders(accessToken, idToken),
   });
   if (!response.ok) {

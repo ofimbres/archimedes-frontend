@@ -2,6 +2,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import { Link, useParams, useLocation } from 'react-router-dom';
 import { AuthContext } from '../../contexts/AuthContext';
 import { getAssignmentProgress, type AssignmentProgressRow } from '../../libs/apiEndpoints';
+import { formatStatusLabel, getStatusBadgeClasses } from '../../utils/assignmentStatus';
 
 const AssignmentProgress: React.FC = () => {
   const { courseId, assignmentId } = useParams<{ courseId: string; assignmentId: string }>();
@@ -92,21 +93,13 @@ const AssignmentProgress: React.FC = () => {
             <tbody>
               {rows.map((row) => {
                 const rawStatus = row.status ?? '';
-                const status = rawStatus.toLowerCase();
-                const statusClass =
-                  status === 'completed'
-                    ? 'bg-success/10 text-success border-success/40'
-                    : status === 'pending'
-                      ? 'bg-warning/10 text-warning border-warning/40'
-                      : status === 'past_due'
-                        ? 'bg-neutral/10 text-neutral border-neutral/40'
-                        : 'bg-base-200 text-base-content border-base-300';
+                const statusClass = getStatusBadgeClasses(rawStatus);
                 return (
                   <tr key={row.student_id} className="border-b border-base-300/50">
                     <td>{row.student_name ?? row.student_id ?? '—'}</td>
                     <td>
                       <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wide ${statusClass}`}>
-                        {(rawStatus || 'unknown').replace(/_/g, ' ')}
+                        {formatStatusLabel(rawStatus)}
                       </span>
                     </td>
                     <td>

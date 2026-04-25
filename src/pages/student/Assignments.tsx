@@ -11,76 +11,18 @@ import { AuthContext } from '../../contexts/AuthContext';
 import { getAssignmentsByCourse, type Assignment, type AssignmentProgressRow } from '../../libs/apiEndpoints';
 import { StudentContext } from '../../contexts/StudentContext';
 import { buildAssignmentLaunchUrl, getArchimedesApiOriginFromEnv } from '../../utils/assignmentLaunchUrl';
+import { resolveStudentAssignmentStatus, parseAssignmentStatus } from '../../utils/assignmentStatus';
 import type { StudentProfile } from '../../types/auth';
 
 interface DecoratedAssignment extends Assignment {
   _progress?: AssignmentProgressRow | null;
 }
 
-/**
- * True if current time is after the end of the due calendar day (UTC date parts from ISO string).
- * Matches "due on Mar 21" as not past due until after Mar 21 23:59:59.999 UTC.
- */
-function isPastDueByDueDate(dueDateIso: string | undefined): boolean {
-  if (dueDateIso == null || String(dueDateIso).trim() === '') return false;
-  const d = new Date(dueDateIso);
-  if (Number.isNaN(d.getTime())) return false;
-  const endOfDueDayUtc = Date.UTC(
-    d.getUTCFullYear(),
-    d.getUTCMonth(),
-    d.getUTCDate(),
-    23,
-    59,
-    59,
-    999
-  );
-  return Date.now() > endOfDueDayUtc;
-}
-
-/** Backend: enrolled students get `completed` | `past_due` | `pending`; teachers/admins get null. */
 function formatStudentDisplayName(profile: StudentProfile | null | undefined): string {
   if (!profile) return '';
   const fromParts = `${profile.first_name ?? ''} ${profile.last_name ?? ''}`.trim();
   if (fromParts !== '') return fromParts;
   return String(profile.full_name ?? '').trim();
-}
-
-function parseMyStatus(
-  raw: string | null | undefined
-): 'pending' | 'past_due' | 'completed' | null {
-  if (raw == null || String(raw).trim() === '') return null;
-  const s = String(raw).trim().toLowerCase();
-  if (s === 'completed' || s === 'past_due' || s === 'pending') return s;
-  return null;
-}
-
-/**
- * Prefer `my_status` from GET .../assignments/courses/{id} when set; otherwise infer from
- * `my_completed_at` / `_progress` and due date (other callers or older backends).
- */
-function resolveStudentAssignmentStatus(a: DecoratedAssignment): 'pending' | 'past_due' | 'completed' {
-  const fromApi = parseMyStatus((a as Assignment).my_status);
-  if (fromApi != null) return fromApi;
-
-  const row = a._progress;
-  if (row?.status === 'completed') return 'completed';
-  const mine = a as { my_completed_at?: string | null };
-  if (mine.my_completed_at != null && String(mine.my_completed_at).trim() !== '') {
-    return 'completed';
-  }
-
-  const due = a.due_date;
-  const overdueByCalendar = isPastDueByDueDate(due);
-
-  if (row?.status === 'past_due') {
-    if (due != null && String(due).trim() !== '' && !overdueByCalendar) {
-      return 'pending';
-    }
-    return 'past_due';
-  }
-
-  if (overdueByCalendar) return 'past_due';
-  return 'pending';
 }
 
 const Assignments: React.FC = () => {
@@ -126,16 +68,16 @@ const Assignments: React.FC = () => {
       // Use `my_status`, `my_completed_at`, `my_score` from the list (student rows).
       const withProgress: DecoratedAssignment[] = (list ?? []).map((a) => {
         const mine = a as Assignment;
-        const st = parseMyStatus(mine.my_status);
+        const st = parseAssignmentStatus(mine.my_status);
         let myRow: AssignmentProgressRow | null = null;
         const completedAtRaw =
           mine.my_completed_at != null && String(mine.my_completed_at).trim() !== ''
             ? String(mine.my_completed_at).trim()
             : null;
-        if (completedAtRaw != null || st === 'completed') {
+        if (completedAtRaw != null || st === 'completed' || st === 'late_completed') {
           myRow = {
             student_id: studentId,
-            status: 'completed',
+            status: st === 'late_completed' ? 'late_completed' : 'completed',
             score: mine.my_score ?? null,
             completed_at: completedAtRaw,
           };
@@ -178,6 +120,9 @@ const Assignments: React.FC = () => {
   const todayAssignments = assignments.filter((a) => resolveStudentAssignmentStatus(a) === 'pending');
   const pastDueAssignments = assignments.filter((a) => resolveStudentAssignmentStatus(a) === 'past_due');
   const completedAssignments = assignments.filter((a) => resolveStudentAssignmentStatus(a) === 'completed');
+  const lateCompletedAssignments = assignments.filter(
+    (a) => resolveStudentAssignmentStatus(a) === 'late_completed'
+  );
 
   const renderAssignmentList = (items: DecoratedAssignment[]) => {
     if (items.length === 0) {
@@ -226,8 +171,8 @@ const Assignments: React.FC = () => {
                     Due {due}
                   </div>
                 )}
-                {status === 'completed' && completedAt && (
-                  <div className="text-xs text-success mt-1">
+                {(status === 'completed' || status === 'late_completed') && completedAt && (
+                  <div className={`text-xs mt-1 ${status === 'late_completed' ? 'text-error' : 'text-success'}`}>
                     Completed {new Date(completedAt).toLocaleDateString(undefined, { dateStyle: 'medium' })}
                   </div>
                 )}
@@ -244,8 +189,12 @@ const Assignments: React.FC = () => {
                     Open
                   </a>
                 )}
-                {status === 'completed' && score != null && (
-                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg bg-success/10 text-success text-sm font-semibold">
+                {(status === 'completed' || status === 'late_completed') && score != null && (
+                  <span
+                    className={`inline-flex h-8 w-8 items-center justify-center rounded-lg text-sm font-semibold ${
+                      status === 'late_completed' ? 'bg-error/10 text-error' : 'bg-success/10 text-success'
+                    }`}
+                  >
                     {score}
                   </span>
                 )}
@@ -283,7 +232,7 @@ const Assignments: React.FC = () => {
         Here&apos;s your activity overview for today.
       </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="card bg-base-100 border-2 border-water-foam/50 rounded-blob shadow-bubble">
           <div className="card-body">
             <div className="flex items-center gap-3 mb-2">
@@ -322,6 +271,20 @@ const Assignments: React.FC = () => {
             </div>
             <div className="text-base-content/80 text-sm">
               {renderAssignmentList(completedAssignments)}
+            </div>
+          </div>
+        </div>
+
+        <div className="card bg-base-100 border-2 border-water-foam/50 rounded-blob shadow-bubble">
+          <div className="card-body">
+            <div className="flex items-center gap-3 mb-2">
+              <span className="text-error">
+                <FontAwesomeIcon icon={faCalendarCheck} className="text-2xl" />
+              </span>
+              <h2 className="font-display font-semibold text-water-deep text-lg">Late completed</h2>
+            </div>
+            <div className="text-base-content/80 text-sm">
+              {renderAssignmentList(lateCompletedAssignments)}
             </div>
           </div>
         </div>
