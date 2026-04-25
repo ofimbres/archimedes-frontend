@@ -9,11 +9,11 @@ export default function TeacherNavbar() {
   const [courses, setCourses] = useState<TeacherCourse[]>([]);
   const [activeItem, setActiveItem] = useState('home');
   const [coursesDropdownOpen, setCoursesDropdownOpen] = useState(false);
-  const [reportsDropdownOpen, setReportsDropdownOpen] = useState(false);
 
-  // Selected course from current route (e.g. /teacher/courses/:courseId/roster)
-  const courseIdMatch = location.pathname.match(/^\/teacher\/courses\/([^/]+)\/roster/);
-  const selectedCourseId = courseIdMatch?.[1] ?? null;
+  // Resolve selected course from route (course pages) or query (home/reports pages).
+  const courseIdMatch = location.pathname.match(/^\/teacher\/courses\/([^/]+)(?:\/|$)/);
+  const queryCourseId = new URLSearchParams(location.search).get('courseId');
+  const selectedCourseId = courseIdMatch?.[1] ?? queryCourseId ?? null;
   const selectedCourse = selectedCourseId
     ? courses.find((c) => c.id === selectedCourseId)
     : null;
@@ -47,19 +47,19 @@ export default function TeacherNavbar() {
   };
 
   const coursesDropdownRef = React.useRef<HTMLDivElement>(null);
-  const reportsDropdownRef = React.useRef<HTMLDivElement>(null);
   const closeCoursesDropdown = () => {
     setCoursesDropdownOpen(false);
     const trigger = coursesDropdownRef.current?.querySelector('label[tabindex="0"]') as HTMLElement | null;
     trigger?.blur();
     (document.activeElement as HTMLElement)?.blur();
   };
-  const closeReportsDropdown = () => {
-    setReportsDropdownOpen(false);
-    const trigger = reportsDropdownRef.current?.querySelector('label[tabindex="0"]') as HTMLElement | null;
-    trigger?.blur();
-    (document.activeElement as HTMLElement)?.blur();
-  };
+  const homeLink = selectedCourseId ? `/?courseId=${encodeURIComponent(selectedCourseId)}` : '/';
+  const reportsOverviewLink = selectedCourseId
+    ? `/teacher/reports/overview?courseId=${encodeURIComponent(selectedCourseId)}`
+    : '/teacher/reports/overview';
+  const reportsStudentsLink = selectedCourseId
+    ? `/teacher/reports/students?courseId=${encodeURIComponent(selectedCourseId)}`
+    : '/teacher/reports/students';
 
   return (
     <div className="navbar bg-base-100 border-b border-base-300 shadow-sm">
@@ -71,13 +71,17 @@ export default function TeacherNavbar() {
             </svg>
           </label>
           <ul tabIndex={0} className="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-52 p-2 shadow-lg">
-            <li><Link to="/" onClick={() => setActiveItem('home')} className={activeItem === 'home' ? 'active' : ''}>Home</Link></li>
+            <li>
+              <Link to={homeLink} onClick={() => setActiveItem('home')} className={activeItem === 'home' ? 'active' : ''}>
+                Home
+              </Link>
+            </li>
             <li>
               <details>
                 <summary>Reports</summary>
                 <ul>
-                  <li><Link to="/teacher/reports/by-group">By Group</Link></li>
-                  <li><Link to="/teacher/reports/by-student">By Student</Link></li>
+                  <li><Link to={reportsOverviewLink}>Report By Group</Link></li>
+                  <li><Link to={reportsStudentsLink}>Report By Student</Link></li>
                 </ul>
               </details>
             </li>
@@ -90,7 +94,22 @@ export default function TeacherNavbar() {
       </div>
       <div className="navbar-center hidden lg:flex">
         <ul className="menu menu-horizontal gap-1 px-1">
-          <li><Link to="/" className={activeItem === 'home' ? 'active font-medium' : ''} onClick={() => setActiveItem('home')}>Home</Link></li>
+          <li>
+            <Link to={homeLink} className={activeItem === 'home' ? 'active font-medium' : ''} onClick={() => setActiveItem('home')}>
+              Home
+            </Link>
+          </li>
+          <li>
+            <details>
+              <summary className={location.pathname.startsWith('/teacher/reports/') ? 'active font-medium' : ''}>
+                Reports
+              </summary>
+              <ul className="p-2 bg-base-100 rounded-box shadow-lg z-[1] w-52">
+                <li><Link to={reportsOverviewLink}>Report By Group</Link></li>
+                <li><Link to={reportsStudentsLink}>Report By Student</Link></li>
+              </ul>
+            </details>
+          </li>
         </ul>
       </div>
       <div className="navbar-end gap-2">
@@ -119,7 +138,7 @@ export default function TeacherNavbar() {
               courses.map((course) => (
                 <li key={course.id}>
                   <Link
-                    to={`/teacher/courses/${course.id}/roster`}
+                    to={`/?courseId=${encodeURIComponent(course.id)}`}
                     state={{ courseName: getCourseDisplayName(course) }}
                     className={selectedCourseId === course.id ? 'active font-medium' : ''}
                     onClick={closeCoursesDropdown}
@@ -134,37 +153,6 @@ export default function TeacherNavbar() {
             </li>
             <li>
               <Link to="/teacher/courses" onClick={closeCoursesDropdown}>Manage courses</Link>
-            </li>
-          </ul>
-        </div>
-        <div ref={reportsDropdownRef} className={`dropdown dropdown-end ${reportsDropdownOpen ? 'dropdown-open' : ''}`}>
-          <label
-            tabIndex={0}
-            className="btn btn-ghost btn-sm text-base-content font-medium"
-            onClick={() => setReportsDropdownOpen((o) => !o)}
-            onBlur={(e) => {
-              if (!e.currentTarget.contains(e.relatedTarget)) setReportsDropdownOpen(false);
-            }}
-          >
-            Reports
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
-          </label>
-          <ul
-            tabIndex={0}
-            className="menu menu-sm dropdown-content bg-base-100 rounded-box z-[1] mt-3 w-44 p-2 shadow-lg"
-            onBlur={(e) => {
-              if (!e.currentTarget.contains(e.relatedTarget)) setReportsDropdownOpen(false);
-            }}
-          >
-            <li>
-              <Link to="/teacher/reports/by-group" onClick={closeReportsDropdown}>
-                By Group
-              </Link>
-            </li>
-            <li>
-              <Link to="/teacher/reports/by-student" onClick={closeReportsDropdown}>
-                By Student
-              </Link>
             </li>
           </ul>
         </div>

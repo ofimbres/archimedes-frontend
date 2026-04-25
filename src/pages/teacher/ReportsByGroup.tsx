@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { AuthContext } from '../../contexts/AuthContext';
 import {
   getTeacherCourses,
@@ -33,11 +33,30 @@ function getPassLabel(score?: number | null): 'Pass' | 'Not pass' | 'No score' {
 function passBadgeClass(score?: number | null): string {
   if (score == null) return 'bg-base-200 text-base-content/70 border-base-300';
   return score >= SCORE_THRESHOLDS.FAIR
-    ? 'bg-success/15 text-success border-success/30'
-    : 'bg-error/15 text-error border-error/30';
+    ? 'bg-[hsl(var(--su)/0.18)] text-[hsl(var(--su))] border-[hsl(var(--su)/0.45)]'
+    : 'bg-[hsl(var(--er)/0.18)] text-[hsl(var(--er))] border-[hsl(var(--er)/0.45)]';
+}
+
+function passBadgeClassFromRow(row: AssignmentProgressRow): string {
+  if (typeof row.passed === 'boolean') {
+    return row.passed
+      ? 'bg-[hsl(var(--su)/0.18)] text-[hsl(var(--su))] border-[hsl(var(--su)/0.45)]'
+      : 'bg-[hsl(var(--er)/0.18)] text-[hsl(var(--er))] border-[hsl(var(--er)/0.45)]';
+  }
+  return passBadgeClass(row.score);
+}
+
+const STATUS_ORDER = ['completed', 'late_completed', 'pending', 'past_due'] as const;
+
+function getPassLabelFromRow(row: AssignmentProgressRow): 'Pass' | 'Not pass' | 'No score' {
+  if (typeof row.passed === 'boolean') {
+    return row.passed ? 'Pass' : 'Not pass';
+  }
+  return getPassLabel(row.score);
 }
 
 const ReportsByGroup: React.FC = () => {
+  const location = useLocation();
   const authContext = useContext(AuthContext);
   const accessToken = authContext.sessionInfo?.accessToken;
   const idToken = authContext.sessionInfo?.idToken;
@@ -69,11 +88,15 @@ const ReportsByGroup: React.FC = () => {
       .then((res) => {
         const items = res.items ?? [];
         setCourses(items);
-        setSelectedCourseId(items[0]?.id ?? '');
+        const queryCourseId = new URLSearchParams(location.search).get('courseId');
+        const preferredCourseId = items.some((course) => course.id === queryCourseId)
+          ? queryCourseId
+          : items[0]?.id ?? '';
+        setSelectedCourseId(preferredCourseId ?? '');
       })
       .catch((err) => setError(err instanceof Error ? err.message : 'Failed to load courses'))
       .finally(() => setLoading(false));
-  }, [teacherId, accessToken, idToken]);
+  }, [teacherId, accessToken, idToken, location.search]);
 
   useEffect(() => {
     if (!teacherId || !selectedCourseId || !accessToken) {
@@ -137,6 +160,58 @@ const ReportsByGroup: React.FC = () => {
     return course ? getCourseDisplayName(course) : 'Group';
   }, [courses, selectedCourseId]);
 
+  const overview = useMemo(() => {
+    const totalRows = rows.length;
+    const withScore = rows.filter((row) => typeof row.score === 'number');
+    const averageScore =
+      withScore.length > 0
+        ? withScore.reduce((acc, row) => acc + Number(row.score ?? 0), 0) / withScore.length
+        : null;
+    const passedCount = rows.filter((row) => getPassLabelFromRow(row) === 'Pass').length;
+    const passRate = totalRows > 0 ? (passedCount / totalRows) * 100 : null;
+    const statusCounts = rows.reduce<Record<string, number>>((acc, row) => {
+      const key = String(row.status ?? 'unknown').toLowerCase();
+      acc[key] = (acc[key] ?? 0) + 1;
+      return acc;
+    }, {});
+    return { totalRows, averageScore, passedCount, passRate, statusCounts };
+  }, [rows]);
+
+  const assignmentInsights = useMemo(() => {
+    const byAssignment = new Map<string, { title: string; total: number; completed: number; passed: number; scoredTotal: number; scoredCount: number }>();
+    rows.forEach((row) => {
+      const current = byAssignment.get(row.assignment_id) ?? {
+        title: row.assignment_title,
+        total: 0,
+        completed: 0,
+        passed: 0,
+        scoredTotal: 0,
+        scoredCount: 0,
+      };
+      current.total += 1;
+      if (String(row.status ?? '').toLowerCase() === 'completed' || String(row.status ?? '').toLowerCase() === 'late_completed') {
+        current.completed += 1;
+      }
+      if (getPassLabelFromRow(row) === 'Pass') {
+        current.passed += 1;
+      }
+      if (typeof row.score === 'number') {
+        current.scoredTotal += row.score;
+        current.scoredCount += 1;
+      }
+      byAssignment.set(row.assignment_id, current);
+    });
+    return Array.from(byAssignment.entries())
+      .map(([assignmentId, entry]) => ({
+        assignmentId,
+        ...entry,
+        completionRate: entry.total > 0 ? (entry.completed / entry.total) * 100 : 0,
+        passRate: entry.total > 0 ? (entry.passed / entry.total) * 100 : 0,
+        avgScore: entry.scoredCount > 0 ? entry.scoredTotal / entry.scoredCount : null,
+      }))
+      .sort((a, b) => b.completionRate - a.completionRate);
+  }, [rows]);
+
   if (loading) {
     return (
       <div className="container max-w-6xl mx-auto px-4 py-12 text-center">
@@ -149,33 +224,21 @@ const ReportsByGroup: React.FC = () => {
   return (
     <div className="container max-w-6xl mx-auto px-4 py-8">
       <div className="mb-4">
-        <Link to="/" className="text-water-mid hover:text-water-deep text-sm font-medium">
+        <Link
+          to={selectedCourseId ? `/?courseId=${encodeURIComponent(selectedCourseId)}` : '/'}
+          className="text-water-mid hover:text-water-deep text-sm font-medium"
+        >
           ← Back to Home
         </Link>
       </div>
-      <h1 className="font-display font-bold text-2xl text-water-deep mb-1">Reports · By Group</h1>
+      <h1 className="font-display font-bold text-2xl text-water-deep mb-1">Reports · Report By Group</h1>
       <p className="text-water-mid text-sm mb-6">
-        Filter by assignment and status for {selectedCourseName}.
+        Course overview for {selectedCourseName}. Use the Courses menu in the navbar to switch groups.
       </p>
 
       {error && <div className="alert alert-warning rounded-bubble mb-4">{error}</div>}
 
-      <div className="rounded-blob border-2 border-water-foam/50 bg-base-100 p-4 shadow-sm mb-6 grid gap-3 md:grid-cols-3">
-        <label className="form-control">
-          <span className="label-text text-sm mb-1">Group</span>
-          <select
-            className="select select-bordered"
-            value={selectedCourseId}
-            onChange={(e) => setSelectedCourseId(e.target.value)}
-          >
-            <option value="" disabled>Select group</option>
-            {courses.map((course) => (
-              <option key={course.id} value={course.id}>
-                {getCourseDisplayName(course)}
-              </option>
-            ))}
-          </select>
-        </label>
+      <div className="rounded-blob border-2 border-water-foam/50 bg-base-100 p-4 shadow-sm mb-6 grid gap-3 md:grid-cols-2">
         <label className="form-control">
           <span className="label-text text-sm mb-1">Assignment</span>
           <select
@@ -209,6 +272,88 @@ const ReportsByGroup: React.FC = () => {
         </label>
       </div>
 
+      {!selectedCourseId ? (
+        <div className="rounded-blob border-2 border-warning/40 bg-warning/10 p-4 shadow-sm mb-6">
+          <p className="text-sm text-warning-content">
+            No course selected. Choose one from the Courses dropdown in the navbar.
+          </p>
+        </div>
+      ) : null}
+
+      {rows.length > 0 && !loadingRows ? (
+        <div className="grid gap-3 md:grid-cols-4 mb-6">
+          <div className="rounded-blob border-2 border-water-foam/50 bg-base-100 p-4 shadow-sm">
+            <p className="text-xs uppercase tracking-wide text-base-content/60">Students / rows</p>
+            <p className="font-display text-2xl text-water-deep mt-1">{overview.totalRows}</p>
+          </div>
+          <div className="rounded-blob border-2 border-water-foam/50 bg-base-100 p-4 shadow-sm">
+            <p className="text-xs uppercase tracking-wide text-base-content/60">Pass rate</p>
+            <p className="font-display text-2xl text-success mt-1">
+              {overview.passRate != null ? `${overview.passRate.toFixed(1)}%` : '—'}
+            </p>
+          </div>
+          <div className="rounded-blob border-2 border-water-foam/50 bg-base-100 p-4 shadow-sm">
+            <p className="text-xs uppercase tracking-wide text-base-content/60">Average score</p>
+            <p className="font-display text-2xl text-primary mt-1">
+              {overview.averageScore != null ? overview.averageScore.toFixed(1) : '—'}
+            </p>
+          </div>
+          <div className="rounded-blob border-2 border-water-foam/50 bg-base-100 p-4 shadow-sm">
+            <p className="text-xs uppercase tracking-wide text-base-content/60">Passed rows</p>
+            <p className="font-display text-2xl text-success mt-1">{overview.passedCount}</p>
+          </div>
+        </div>
+      ) : null}
+
+      {rows.length > 0 && !loadingRows ? (
+        <div className="rounded-blob border-2 border-water-foam/50 bg-base-100 p-4 shadow-sm mb-6">
+          <h2 className="font-display font-semibold text-water-deep mb-3">Status distribution</h2>
+          <div className="flex flex-wrap gap-2">
+            {STATUS_ORDER.map((status) => (
+              <span
+                key={status}
+                className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wide ${getStatusBadgeClasses(status)}`}
+              >
+                {formatStatusLabel(status)}: {overview.statusCounts[status] ?? 0}
+              </span>
+            ))}
+          </div>
+        </div>
+      ) : null}
+
+      {rows.length > 0 && !loadingRows ? (
+        <div className="rounded-blob border-2 border-water-foam/50 bg-base-100 p-4 shadow-sm mb-6">
+          <h2 className="font-display font-semibold text-water-deep mb-3">Assignment insights</h2>
+          <div className="overflow-x-auto">
+            <table className="table table-sm">
+              <thead>
+                <tr className="text-water-deep border-b border-water-foam/50">
+                  <th>Assignment</th>
+                  <th>Completion</th>
+                  <th>Pass rate</th>
+                  <th>Avg score</th>
+                </tr>
+              </thead>
+              <tbody>
+                {assignmentInsights.map((item) => (
+                  <tr key={item.assignmentId}>
+                    <td>{item.title}</td>
+                    <td>
+                      <div className="w-40">
+                        <progress className="progress progress-primary w-full" value={item.completionRate} max={100} />
+                        <div className="text-xs text-base-content/70 mt-1">{item.completionRate.toFixed(1)}%</div>
+                      </div>
+                    </td>
+                    <td className="text-success font-semibold">{item.passRate.toFixed(1)}%</td>
+                    <td>{item.avgScore != null ? item.avgScore.toFixed(1) : '—'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      ) : null}
+
       {loadingRows ? (
         <p className="text-water-mid text-sm">Loading rows...</p>
       ) : rows.length === 0 ? (
@@ -240,8 +385,8 @@ const ReportsByGroup: React.FC = () => {
                   </td>
                   <td>{row.score != null ? row.score : '—'}</td>
                   <td>
-                    <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${passBadgeClass(row.score)}`}>
-                      {getPassLabel(row.score)}
+                    <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${passBadgeClassFromRow(row)}`}>
+                      {getPassLabelFromRow(row)}
                     </span>
                   </td>
                   <td>{row.completed_at ? new Date(row.completed_at).toLocaleString() : '—'}</td>

@@ -85,10 +85,19 @@ export function resolveStudentAssignmentStatus(
 
 export function getStatusBadgeClasses(status: string | null | undefined): string {
   const normalized = parseAssignmentStatus(status);
-  if (normalized === 'completed') return 'bg-success/10 text-success border-success/40';
-  if (normalized === 'late_completed') return 'bg-error/10 text-error border-error/40';
-  if (normalized === 'pending') return 'bg-warning/10 text-warning border-warning/40';
-  if (normalized === 'past_due') return 'bg-warning/10 text-warning border-warning/40';
+  // Use explicit HSL theme vars to guarantee visible colors in all themes/builds.
+  if (normalized === 'completed') {
+    return 'bg-[hsl(var(--su)/0.18)] text-[hsl(var(--su))] border-[hsl(var(--su)/0.45)]';
+  }
+  if (normalized === 'past_due') {
+    return 'bg-[hsl(var(--wa)/0.2)] text-[hsl(var(--wa))] border-[hsl(var(--wa)/0.5)]';
+  }
+  if (normalized === 'pending') {
+    return 'bg-[hsl(var(--s)/0.16)] text-[hsl(var(--s))] border-[hsl(var(--s)/0.45)]';
+  }
+  if (normalized === 'late_completed') {
+    return 'bg-[#ffedd5] text-[#c2410c] border-[#fdba74]';
+  }
   return 'bg-base-200 text-base-content border-base-300';
 }
 
