@@ -11,7 +11,7 @@ import {
   type TeacherCourse,
 } from '../../libs/apiEndpoints';
 import { SCORE_THRESHOLDS } from '../../constants';
-import { formatStatusLabel, getStatusBadgeClasses } from '../../utils/assignmentStatus';
+import { formatStatusLabel, getStatusBadgeClasses, parseAssignmentStatus } from '../../utils/assignmentStatus';
 
 const STATUS_OPTIONS = ['pending', 'completed', 'past_due', 'late_completed'] as const;
 
@@ -55,6 +55,40 @@ function getPassLabelFromRow(row: AssignmentProgressRow): 'Pass' | 'Not pass' | 
   return getPassLabel(row.score);
 }
 
+function rowTooltip(row: GroupReportRow): string {
+  return [
+    row.assignment_title,
+    `Status: ${formatStatusLabel(row.status ?? '')}`,
+    `Score: ${row.score != null ? String(row.score) : '—'}`,
+    `Pass: ${getPassLabelFromRow(row)}`,
+    row.completed_at ? `Completed: ${new Date(row.completed_at).toLocaleString()}` : 'Completed: —',
+  ].join('\n');
+}
+
+/** Thick left accent on assignment mini-cards (matches status palette). */
+function statusLeftBorderClass(status: string | null | undefined): string {
+  const n = parseAssignmentStatus(status);
+  if (n === 'completed') return 'border-l-success';
+  if (n === 'past_due') return 'border-l-warning';
+  if (n === 'pending') return 'border-l-info';
+  if (n === 'late_completed') return 'border-l-[#ea580c]';
+  return 'border-l-base-300';
+}
+
+function formatCompletedShort(iso: string | null | undefined): string {
+  if (iso == null || String(iso).trim() === '') return '—';
+  try {
+    return new Date(iso).toLocaleString(undefined, {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+  } catch {
+    return '—';
+  }
+}
+
 const ReportsByGroup: React.FC = () => {
   const location = useLocation();
   const authContext = useContext(AuthContext);
@@ -76,6 +110,7 @@ const ReportsByGroup: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [loadingRows, setLoadingRows] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [detailView, setDetailView] = useState<'table' | 'cards'>('table');
 
   useEffect(() => {
     if (!teacherId || !accessToken) {
@@ -212,9 +247,35 @@ const ReportsByGroup: React.FC = () => {
       .sort((a, b) => b.completionRate - a.completionRate);
   }, [rows]);
 
+  const rowLookup = useMemo(() => {
+    const map = new Map<string, GroupReportRow>();
+    rows.forEach((row) => {
+      map.set(`${row.student_id}::${row.assignment_id}`, row);
+    });
+    return map;
+  }, [rows]);
+
+  const matrixStudents = useMemo(() => {
+    const byId = new Map<string, string>();
+    rows.forEach((row) => {
+      byId.set(row.student_id, row.student_name ?? row.student_id);
+    });
+    return Array.from(byId.entries()).sort((a, b) => a[1].localeCompare(b[1], undefined, { sensitivity: 'base' }));
+  }, [rows]);
+
+  const matrixColumns = useMemo(() => {
+    const list = selectedAssignmentId
+      ? assignments.filter((a) => a.id === selectedAssignmentId)
+      : assignments;
+    return list.map((a) => ({
+      id: a.id,
+      title: assignmentTitle(a),
+    }));
+  }, [assignments, selectedAssignmentId]);
+
   if (loading) {
     return (
-      <div className="container max-w-6xl mx-auto px-4 py-12 text-center">
+      <div className="container max-w-7xl mx-auto px-4 py-12 text-center">
         <span className="loading loading-spinner loading-lg text-primary" />
         <p className="mt-4 text-water-mid">Loading report...</p>
       </div>
@@ -222,7 +283,7 @@ const ReportsByGroup: React.FC = () => {
   }
 
   return (
-    <div className="container max-w-6xl mx-auto px-4 py-8">
+    <div className="container max-w-7xl mx-auto px-4 py-8">
       <div className="mb-4">
         <Link
           to={selectedCourseId ? `/?courseId=${encodeURIComponent(selectedCourseId)}` : '/'}
@@ -361,40 +422,132 @@ const ReportsByGroup: React.FC = () => {
           <p className="text-base-content/70 text-sm">No matching report rows.</p>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-blob border-2 border-water-foam/50 bg-base-100 shadow-bubble">
-          <table className="table">
-            <thead>
-              <tr className="text-water-deep border-b border-water-foam/50">
-                <th className="font-display font-semibold">Assignment</th>
-                <th className="font-display font-semibold">Student</th>
-                <th className="font-display font-semibold">Status</th>
-                <th className="font-display font-semibold">Score</th>
-                <th className="font-display font-semibold">Pass</th>
-                <th className="font-display font-semibold">Completed at</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((row) => (
-                <tr key={`${row.assignment_id}-${row.student_id}`} className="border-b border-base-300/50">
-                  <td>{row.assignment_title}</td>
-                  <td>{row.student_name ?? row.student_id}</td>
-                  <td>
-                    <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wide ${getStatusBadgeClasses(row.status ?? '')}`}>
-                      {formatStatusLabel(row.status ?? '')}
-                    </span>
-                  </td>
-                  <td>{row.score != null ? row.score : '—'}</td>
-                  <td>
-                    <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${passBadgeClassFromRow(row)}`}>
-                      {getPassLabelFromRow(row)}
-                    </span>
-                  </td>
-                  <td>{row.completed_at ? new Date(row.completed_at).toLocaleString() : '—'}</td>
-                </tr>
+        <>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+            <p className="text-sm text-base-content/70">
+              {detailView === 'cards'
+                ? 'One section per student; assignments are compact mini-cards (up to six per row on wide screens) with status, pass, score, and completed time. Missing cards mean no row for the current filters.'
+                : 'Detailed rows for every student and assignment in the current filters.'}
+            </p>
+            <div className="join border border-base-300 rounded-lg overflow-hidden shrink-0">
+              <button
+                type="button"
+                className={`join-item btn btn-sm ${detailView === 'table' ? 'btn-primary' : 'btn-ghost'}`}
+                onClick={() => setDetailView('table')}
+              >
+                Table
+              </button>
+              <button
+                type="button"
+                className={`join-item btn btn-sm ${detailView === 'cards' ? 'btn-primary' : 'btn-ghost'}`}
+                onClick={() => setDetailView('cards')}
+              >
+                By student
+              </button>
+            </div>
+          </div>
+
+          {detailView === 'table' ? (
+            <div className="overflow-x-auto rounded-blob border-2 border-water-foam/50 bg-base-100 shadow-bubble">
+              <table className="table">
+                <thead>
+                  <tr className="text-water-deep border-b border-water-foam/50">
+                    <th className="font-display font-semibold">Assignment</th>
+                    <th className="font-display font-semibold">Student</th>
+                    <th className="font-display font-semibold">Status</th>
+                    <th className="font-display font-semibold">Score</th>
+                    <th className="font-display font-semibold">Pass</th>
+                    <th className="font-display font-semibold">Completed at</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {rows.map((row) => (
+                    <tr key={`${row.assignment_id}-${row.student_id}`} className="border-b border-base-300/50">
+                      <td>{row.assignment_title}</td>
+                      <td>{row.student_name ?? row.student_id}</td>
+                      <td>
+                        <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wide ${getStatusBadgeClasses(row.status ?? '')}`}>
+                          {formatStatusLabel(row.status ?? '')}
+                        </span>
+                      </td>
+                      <td>{row.score != null ? row.score : '—'}</td>
+                      <td>
+                        <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${passBadgeClassFromRow(row)}`}>
+                          {getPassLabelFromRow(row)}
+                        </span>
+                      </td>
+                      <td>{row.completed_at ? new Date(row.completed_at).toLocaleString() : '—'}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : matrixColumns.length === 0 ? (
+            <div className="rounded-blob border-2 border-water-foam/50 bg-base-100 p-6 shadow-sm">
+              <p className="text-base-content/70 text-sm">No assignments to show.</p>
+            </div>
+          ) : (
+            <div className="space-y-5">
+              {matrixStudents.map(([studentId, displayName]) => (
+                <section
+                  key={studentId}
+                  className="rounded-blob border-2 border-water-foam/50 bg-base-100 p-3 sm:p-4 shadow-bubble"
+                  aria-labelledby={`student-heading-${studentId}`}
+                >
+                  <h3 id={`student-heading-${studentId}`} className="font-display font-semibold text-base text-water-deep mb-3">
+                    {displayName}
+                  </h3>
+                  {/* Up to 6+ cards per row on wide screens; minmax(0,1fr) lets columns shrink without overflow */}
+                  <div className="grid grid-cols-2 min-[520px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
+                    {matrixColumns.map((col) => {
+                      const cell = rowLookup.get(`${studentId}::${col.id}`);
+                      const accent = cell ? statusLeftBorderClass(cell.status) : 'border-l-base-300 border-dashed';
+                      return (
+                        <article
+                          key={col.id}
+                          className={`min-w-0 rounded-lg border border-base-300/70 bg-base-200/20 pl-0.5 pr-1.5 py-2 shadow-sm border-l-[3px] border-solid ${accent} transition-shadow hover:shadow-md`}
+                          title={cell ? rowTooltip(cell) : `${col.title} — no row for current filters`}
+                        >
+                          <h4 className="font-medium text-[11px] leading-tight text-water-deep line-clamp-2 mb-1.5 pl-1.5 break-words">
+                            {col.title}
+                          </h4>
+                          {cell ? (
+                            <div className="space-y-1.5 pl-1.5">
+                              <div className="flex flex-col gap-0.5 items-stretch">
+                                <span
+                                  className={`inline-flex justify-center rounded px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide leading-tight text-center ${getStatusBadgeClasses(cell.status ?? '')}`}
+                                >
+                                  {formatStatusLabel(cell.status ?? '')}
+                                </span>
+                                <span
+                                  className={`inline-flex justify-center rounded px-1 py-0.5 text-[9px] font-semibold leading-tight text-center ${passBadgeClassFromRow(cell)}`}
+                                >
+                                  {getPassLabelFromRow(cell)}
+                                </span>
+                              </div>
+                              <dl className="grid grid-cols-1 gap-y-0.5 text-[10px] leading-tight text-base-content/80">
+                                <div className="flex justify-between gap-1 min-w-0">
+                                  <dt className="shrink-0 text-base-content/55">Score</dt>
+                                  <dd className="truncate text-right font-medium tabular-nums">{cell.score != null ? cell.score : '—'}</dd>
+                                </div>
+                                <div className="min-w-0">
+                                  <dt className="text-[9px] text-base-content/55 mb-0.5">Completed</dt>
+                                  <dd className="break-words hyphens-auto">{formatCompletedShort(cell.completed_at)}</dd>
+                                </div>
+                              </dl>
+                            </div>
+                          ) : (
+                            <p className="text-[9px] text-base-content/50 italic pl-1.5 leading-tight">No row for filters.</p>
+                          )}
+                        </article>
+                      );
+                    })}
+                  </div>
+                </section>
               ))}
-            </tbody>
-          </table>
-        </div>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
