@@ -275,7 +275,7 @@ const ReportsByGroup: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="container max-w-7xl mx-auto px-4 py-12 text-center">
+      <div className="container max-w-screen-2xl mx-auto px-4 py-12 text-center">
         <span className="loading loading-spinner loading-lg text-primary" />
         <p className="mt-4 text-water-mid">Loading report...</p>
       </div>
@@ -283,7 +283,7 @@ const ReportsByGroup: React.FC = () => {
   }
 
   return (
-    <div className="container max-w-7xl mx-auto px-4 py-8">
+    <div className="container max-w-screen-2xl mx-auto px-4 py-8">
       <div className="mb-4">
         <Link
           to={selectedCourseId ? `/?courseId=${encodeURIComponent(selectedCourseId)}` : '/'}
@@ -426,7 +426,7 @@ const ReportsByGroup: React.FC = () => {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
             <p className="text-sm text-base-content/70">
               {detailView === 'cards'
-                ? 'One section per student; assignments are compact mini-cards (up to six per row on wide screens) with status, pass, score, and completed time. Missing cards mean no row for the current filters.'
+                ? 'One section per student; assignments are compact mini-cards (more columns on very wide screens: up to 6 → 8 → 10) with status, pass, score, and completed time. Missing cards mean no row for the current filters.'
                 : 'Detailed rows for every student and assignment in the current filters.'}
             </p>
             <div className="join border border-base-300 rounded-lg overflow-hidden shrink-0">
@@ -498,7 +498,7 @@ const ReportsByGroup: React.FC = () => {
                     {displayName}
                   </h3>
                   {/* Up to 6+ cards per row on wide screens; minmax(0,1fr) lets columns shrink without overflow */}
-                  <div className="grid grid-cols-2 min-[520px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
+                  <div className="grid grid-cols-2 min-[520px]:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 2xl:grid-cols-8 min-[1800px]:grid-cols-10 gap-2">
                     {matrixColumns.map((col) => {
                       const cell = rowLookup.get(`${studentId}::${col.id}`);
                       const accent = cell ? statusLeftBorderClass(cell.status) : 'border-l-base-300 border-dashed';
@@ -512,7 +512,7 @@ const ReportsByGroup: React.FC = () => {
                             {col.title}
                           </h4>
                           {cell ? (
-                            <div className="space-y-1.5 pl-1.5">
+                            <div className="space-y-2 pl-1.5 pr-0.5">
                               <div className="flex flex-col gap-0.5 items-stretch">
                                 <span
                                   className={`inline-flex justify-center rounded px-1 py-0.5 text-[9px] font-semibold uppercase tracking-wide leading-tight text-center ${getStatusBadgeClasses(cell.status ?? '')}`}
@@ -525,16 +525,26 @@ const ReportsByGroup: React.FC = () => {
                                   {getPassLabelFromRow(cell)}
                                 </span>
                               </div>
-                              <dl className="grid grid-cols-1 gap-y-0.5 text-[10px] leading-tight text-base-content/80">
-                                <div className="flex justify-between gap-1 min-w-0">
-                                  <dt className="shrink-0 text-base-content/55">Score</dt>
-                                  <dd className="truncate text-right font-medium tabular-nums">{cell.score != null ? cell.score : '—'}</dd>
+                              <div className="rounded-md border border-base-300/50 bg-base-100/80 px-2 py-2">
+                                <div className="space-y-2">
+                                  <div>
+                                    <p className="text-[9px] font-semibold uppercase tracking-wide text-base-content/50 leading-none">
+                                      Score
+                                    </p>
+                                    <p className="mt-1 text-sm font-semibold tabular-nums text-water-deep leading-none">
+                                      {cell.score != null ? cell.score : '—'}
+                                    </p>
+                                  </div>
+                                  <div className="border-t border-base-300/50 pt-2">
+                                    <p className="text-[9px] font-semibold uppercase tracking-wide text-base-content/50 leading-none">
+                                      Completed
+                                    </p>
+                                    <p className="mt-1 text-[11px] font-medium text-base-content leading-snug break-words">
+                                      {formatCompletedShort(cell.completed_at)}
+                                    </p>
+                                  </div>
                                 </div>
-                                <div className="min-w-0">
-                                  <dt className="text-[9px] text-base-content/55 mb-0.5">Completed</dt>
-                                  <dd className="break-words hyphens-auto">{formatCompletedShort(cell.completed_at)}</dd>
-                                </div>
-                              </dl>
+                              </div>
                             </div>
                           ) : (
                             <p className="text-[9px] text-base-content/50 italic pl-1.5 leading-tight">No row for filters.</p>
